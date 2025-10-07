@@ -52,6 +52,7 @@ public class MainServer {
             player.getObjOut().writeObject(objectSentReceived);
             player.getObjOut().flush();
         }
+        System.out.println("123");
         //load toan bo player da online vao danh sach ben client
         ObjectSentReceived gui=new ObjectSentReceived("loadPlayerOnline", onlinePlayers);
         p.getObjOut().writeObject(gui);

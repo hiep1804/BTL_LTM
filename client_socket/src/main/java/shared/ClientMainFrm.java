@@ -21,12 +21,12 @@ public class ClientMainFrm extends JFrame{
     private Player player = null;
     public ClientMainFrm(){
         try{
-            Socket socket=new Socket("172.11.17.148",59);
+            Socket socket=new Socket("192.168.1.13",59);
             player=new Player(socket.getInetAddress().getHostAddress(), socket);
             //Gui thong tin player moi
-            ObjectSentReceived gui=new ObjectSentReceived("addPlayerOnline",player);
-            player.getObjOut().writeObject(gui);
-            player.getObjOut().flush();
+//            ObjectSentReceived gui=new ObjectSentReceived("addPlayerOnline",player);
+//            player.getObjOut().writeObject(gui);
+//            player.getObjOut().flush();
         }
         catch(Exception e){
             e.printStackTrace();

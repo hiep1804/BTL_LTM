@@ -49,7 +49,6 @@ public class ClientMainPanel extends JPanel {
         new Thread(() -> {
             try {
                 while (true) {
-                    System.out.println(p.getObjIn().readObject().getClass());
                     ObjectSentReceived objectSentReceived = (ObjectSentReceived) p.getObjIn().readObject();
                     //them 1 nguoi choi moi vao danh sach neu da online
                     if (objectSentReceived.getType().equals("addPlayerOnline")) {
