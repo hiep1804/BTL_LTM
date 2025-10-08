@@ -2,12 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package shared;
+package model;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -18,7 +17,7 @@ import java.net.Socket;
  *
  * @author hn235
  */
-class Player implements Serializable{
+public class Player implements Serializable{
     private static final long serialVersionUID = 1L;
     private String name;
     private transient Socket socket;

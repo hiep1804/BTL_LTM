@@ -2,17 +2,19 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package shared;
+package model;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import shared.ObjectSentReceived;
+
 /**
  *
  * @author hn235
  */
-class Room implements Runnable {
+public class Room implements Runnable {
     private Player p1, p2;
     private int score1 = 0, score2 = 0;
 

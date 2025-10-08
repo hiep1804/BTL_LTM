@@ -10,11 +10,19 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
+
+import model.*;
+import model.Player;
+import model.Room;
+import DAO.PlayerDAO;
 
 public class MainServer {
     private ServerSocket ss;
     private HashMap<String, Player> onlinePlayers = new HashMap<>();
+    private PlayerDAO PlayerDAO = new PlayerDAO();
 
     public MainServer(int port) {
         try {
@@ -117,6 +125,19 @@ public class MainServer {
                     } else {
 //                        p.getOut().println("Người chơi " + ip + " không khả dụng.");
                     }
+                }
+                if (type.equals("getleaderboard")) {
+                    try {
+                        List<Player> players = PlayerDAO.getAllPlayers(); // gọi DAO
+                        ObjectSentReceived resp = new ObjectSentReceived("playerList", players);
+                        p.getObjOut().writeObject(resp);
+                        p.getObjOut().flush();
+                    } catch (SQLException ex) {
+                        ObjectSentReceived err = new ObjectSentReceived("playerListError", ex.getMessage());
+                        p.getObjOut().writeObject(err);
+                        p.getObjOut().flush();
+                    }
+                    continue;
                 }
 //                String[] parts = msg.split(",", 2);
 

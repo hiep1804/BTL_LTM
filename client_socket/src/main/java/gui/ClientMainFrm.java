@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package shared;
+package gui;
 
 import java.awt.CardLayout;
 import java.awt.HeadlessException;
@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.net.Socket;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-
+import model.ObjectSentReceived;
+// Make sure the Player class exists in the model package and is compiled
+import model.Player;
 /**
  *
  * @author hn235
@@ -21,7 +23,7 @@ public class ClientMainFrm extends JFrame{
     private Player player = null;
     public ClientMainFrm(){
         try{
-            Socket socket=new Socket("192.168.1.13",59);
+            Socket socket=new Socket("192.168.1.2",59);
             player=new Player(socket.getInetAddress().getHostAddress(), socket);
             //Gui thong tin player moi
 //            ObjectSentReceived gui=new ObjectSentReceived("addPlayerOnline",player);

@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package shared;
+package gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.Player;
+import model.ObjectSentReceived;
 
 public class ClientMainPanel extends JPanel {
 
