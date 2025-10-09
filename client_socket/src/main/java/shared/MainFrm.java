@@ -30,7 +30,7 @@ public class MainFrm extends JFrame{
         
         // Kết nối tới server ngay khi mở app
         try {
-            String host = "192.168.0.104";
+            String host = "172.11.34.25";
             int port = 59;
             network.connect(host, port);
             System.out.println("Đã kết nối tới " + host + ":" + port);
