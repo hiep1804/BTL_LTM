@@ -50,6 +50,7 @@ public class ClientMainPanel extends JPanel {
             try {
                 while (true) {
                     ObjectSentReceived objectSentReceived = (ObjectSentReceived) p.getObjIn().readObject();
+                    System.out.println(objectSentReceived.getType());
                     //them 1 nguoi choi moi vao danh sach neu da online
                     if (objectSentReceived.getType().equals("addPlayerOnline")) {
                         Player player = (Player) objectSentReceived.getObj();
@@ -76,20 +77,20 @@ public class ClientMainPanel extends JPanel {
                         if (choice == JOptionPane.YES_OPTION) {
                             System.out.println("Bạn chọn: Đồng ý");
                             //gui thong tin dong y thach dau
-                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("accept", player);
+                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("accept", player.getName());
                             p.getObjOut().writeObject(objectSentReceived1);
                             p.getObjOut().flush();
                         } else {
                             System.out.println("Bạn chọn: Từ chối");
                             //gui thong tin tu choi thach dau
-                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("reject", player);
+                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("reject", player.getName());
                             p.getObjOut().writeObject(objectSentReceived1);
                             p.getObjOut().flush();
                         }
                     }
                     if(objectSentReceived.getType().equals("accept challenge")){
                         Player player=(Player)objectSentReceived.getObj();
-                        clientMainFrm.setStartGameRoom(p);
+                        clientMainFrm.setStartGameRoom(player);
                         clientMainFrm.showStartGameRoom();
                     }
                 }

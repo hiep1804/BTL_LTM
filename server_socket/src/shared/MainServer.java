@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MainServer {
     private ServerSocket ss;
@@ -38,7 +40,13 @@ public class MainServer {
                 //out.println("Chào " + name + "! Người chơi online: " + onlinePlayers.keySet());
 
                 // B2: mỗi client chạy thread riêng
-                new Thread(() -> handleClient(p)).start();
+                new Thread(() -> {
+                    try {
+                        handleClient(p);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }).start();
             }
 
         } catch (Exception e) {
@@ -60,7 +68,7 @@ public class MainServer {
         //them player moi online vao danh sach
         onlinePlayers.put(p.getName(), p);
     }
-    private void handleClient(Player p) {
+    private void handleClient(Player p) throws IOException {
         try {
             ObjectSentReceived objectSentReceived;
             while ((objectSentReceived =(ObjectSentReceived) p.getObjIn().readObject()) != null) {
@@ -159,6 +167,7 @@ public class MainServer {
         } catch (Exception e) {
             System.out.println("Người chơi " + p.getName() + " đã thoát.");
             onlinePlayers.remove(p.getName());
+            updateListPlayerOnline(p);
         }
     }
 
