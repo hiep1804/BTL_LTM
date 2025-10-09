@@ -40,13 +40,7 @@ public class MainServer {
                 //out.println("Chào " + name + "! Người chơi online: " + onlinePlayers.keySet());
 
                 // B2: mỗi client chạy thread riêng
-                new Thread(() -> {
-                    try {
-                        handleClient(p);
-                    } catch (IOException ex) {
-                        Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }).start();
+                new Thread(() -> handleClient(p)).start();
             }
 
         } catch (Exception e) {
@@ -60,7 +54,6 @@ public class MainServer {
             player.getObjOut().writeObject(objectSentReceived);
             player.getObjOut().flush();
         }
-        System.out.println("123");
         //load toan bo player da online vao danh sach ben client
         ObjectSentReceived gui=new ObjectSentReceived("loadPlayerOnline", onlinePlayers);
         p.getObjOut().writeObject(gui);
@@ -68,7 +61,7 @@ public class MainServer {
         //them player moi online vao danh sach
         onlinePlayers.put(p.getName(), p);
     }
-    private void handleClient(Player p) throws IOException {
+    private void handleClient(Player p){
         try {
             ObjectSentReceived objectSentReceived;
             while ((objectSentReceived =(ObjectSentReceived) p.getObjIn().readObject()) != null) {
@@ -167,7 +160,23 @@ public class MainServer {
         } catch (Exception e) {
             System.out.println("Người chơi " + p.getName() + " đã thoát.");
             onlinePlayers.remove(p.getName());
-            updateListPlayerOnline(p);
+            xoa();
+        }
+    }
+    private void xoa(){
+        for(Player player:onlinePlayers.values()){
+            //them 1 player moi online vao danh sach ben client
+            HashMap<String,Player> mp=new HashMap<>();
+            for(String key:onlinePlayers.keySet()){
+                mp.put(key, onlinePlayers.get(key));
+            }
+            ObjectSentReceived objectSentReceived=new ObjectSentReceived("loadPlayerOnline", mp);
+            try {
+                player.getObjOut().writeObject(objectSentReceived);
+                player.getObjOut().flush();
+            } catch (IOException ex) {
+                Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 

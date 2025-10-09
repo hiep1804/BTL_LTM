@@ -90,7 +90,7 @@ public class ClientMainPanel extends JPanel {
                     }
                     if(objectSentReceived.getType().equals("accept challenge")){
                         Player player=(Player)objectSentReceived.getObj();
-                        clientMainFrm.setStartGameRoom(player);
+                        clientMainFrm.setStartGameRoom(p);
                         clientMainFrm.showStartGameRoom();
                     }
                 }
