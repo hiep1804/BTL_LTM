@@ -10,10 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Player;
-import model.ObjectSentReceived;
+import shared.ObjectSentReceived;
 
 public class ClientMainPanel extends JPanel {
 
@@ -27,9 +28,9 @@ public class ClientMainPanel extends JPanel {
     private JButton addButton;
     private ObjectSentReceived objectSentReceived;
     private ClientMainFrm clientMainFrm;
-
+    private LeaderboardPanel leaderboardPanel;
     public ClientMainPanel(Player p, ClientMainFrm clientMainFrm) {
-        this.clientMainFrm=clientMainFrm;
+        final ClientMainFrm frame = clientMainFrm;
         this.p = p;
         setLayout(null); // ❌ bỏ Layout Manager, dùng toạ độ tuyệt đối
         JLabel title = new JLabel("Client Main Frame");
@@ -48,10 +49,34 @@ public class ClientMainPanel extends JPanel {
         scrollPane = new JScrollPane(listPanel);
         scrollPane.setBounds(200, 150, 400, 300); // 👈 tự đặt vị trí + size
         add(scrollPane);
+
+        leaderboardPanel = new LeaderboardPanel();
+        leaderboardPanel.setBounds(620, 150, 300, 300);
+        add(leaderboardPanel);
+
+        requestLeaderboard();
         new Thread(() -> {
             try {
                 while (true) {
                     ObjectSentReceived objectSentReceived = (ObjectSentReceived) p.getObjIn().readObject();
+                    if (objectSentReceived.getType().equals("playerList")) {
+                        Object payload = objectSentReceived.getObj();
+                        List<Player> topPlayers = new ArrayList<>();
+                        if (payload instanceof List<?>) {
+                            for (Object item : (List<?>) payload) {
+                                if (item instanceof Player) {
+                                    topPlayers.add((Player) item);
+                                }
+                            }
+                        }
+                        SwingUtilities.invokeLater(() -> leaderboardPanel.updateData(topPlayers));
+                        continue;
+                    }
+                    if (objectSentReceived.getType().equals("playerListError")) {
+                        String message = String.valueOf(objectSentReceived.getObj());
+                        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, message, "Leaderboard Error", JOptionPane.ERROR_MESSAGE));
+                        continue;
+                    }
                     //them 1 nguoi choi moi vao danh sach neu da online
                     if (objectSentReceived.getType().equals("addPlayerOnline")) {
                         Player player = (Player) objectSentReceived.getObj();
@@ -99,6 +124,16 @@ public class ClientMainPanel extends JPanel {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void requestLeaderboard() {
+        try {
+            ObjectSentReceived request = new ObjectSentReceived("getleaderboard", null);
+            p.getObjOut().writeObject(request);
+            p.getObjOut().flush();
+        } catch (IOException ex) {
+            Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     // Làm mới danh sách

@@ -10,9 +10,10 @@ import java.io.IOException;
 import java.net.Socket;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import model.ObjectSentReceived;
+
 // Make sure the Player class exists in the model package and is compiled
 import model.Player;
+import shared.ObjectSentReceived;
 /**
  *
  * @author hn235
@@ -23,7 +24,7 @@ public class ClientMainFrm extends JFrame{
     private Player player = null;
     public ClientMainFrm(){
         try{
-            Socket socket=new Socket("192.168.1.2",59);
+            Socket socket=new Socket("172.11.33.133",59);
             player=new Player(socket.getInetAddress().getHostAddress(), socket);
             //Gui thong tin player moi
 //            ObjectSentReceived gui=new ObjectSentReceived("addPlayerOnline",player);

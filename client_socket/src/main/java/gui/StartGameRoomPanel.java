@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import model.*;
+import shared.ObjectSentReceived;
 /**
  *
  * @author hn235

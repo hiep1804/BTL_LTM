@@ -19,7 +19,13 @@ import java.net.Socket;
  */
 public class Player implements Serializable{
     private static final long serialVersionUID = 1L;
+    private int player_id;
     private String name;
+    private String username;
+    private String password;
+    private int total_score;
+    private int total_wins;
+    private int matches_played;
     private transient Socket socket;
     private transient PrintWriter out;
     private transient BufferedReader in;
@@ -40,12 +46,70 @@ public class Player implements Serializable{
         this.objIn = new ObjectInputStream(socket.getInputStream());
     }
 
+    public Player(int player_id, String name, String username, String password, int total_score, int total_wins, int matches_played) {
+        this.player_id = player_id;
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.total_score = total_score;
+        this.total_wins = total_wins;
+        this.matches_played = matches_played;
+    }
+
+    public int getPlayer_id() {
+        return player_id;
+    }
+
+    public void setPlayer_id(int player_id) {
+        this.player_id = player_id;
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public int getTotal_score() {
+        return total_score;
+    }
+
+    public void setTotal_score(int total_score) {
+        this.total_score = total_score;
+    }
+
+    public int getTotal_wins() {
+        return total_wins;
+    }
+
+    public void setTotal_wins(int total_wins) {
+        this.total_wins = total_wins;
+    }
+
+    public int getMatches_played() {
+        return matches_played;
+    }
+
+    public void setMatches_played(int matches_played) {
+        this.matches_played = matches_played;
     }
 
     public Socket getSocket() {

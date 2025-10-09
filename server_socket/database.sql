@@ -2,7 +2,7 @@ CREATE TABLE Players (
     player_id       INT AUTO_INCREMENT PRIMARY KEY,
     username        VARCHAR(50) NOT NULL UNIQUE,
     password        VARCHAR(255) NOT NULL,
-    display_name    VARCHAR(100) NOT NULL,
+    name    VARCHAR(100) NOT NULL,
     total_score     INT NOT NULL DEFAULT 0,
     total_wins      INT NOT NULL DEFAULT 0,
     matches_played  INT NOT NULL DEFAULT 0,
@@ -40,7 +40,7 @@ CREATE TABLE Rounds (
 CREATE INDEX idx_1 ON Players(total_score DESC, total_wins DESC);
 
 
-INSERT INTO Players (username, password, display_name, total_score, total_wins, matches_played) VALUES
+INSERT INTO Players (username, password, name, total_score, total_wins, matches_played) VALUES
 ('nha', '123456', 'Gamer Pro', 125, 12, 20),
 ('nha2', '123456', 'Newbie', 40, 4, 10),
 ('nha3', '123456', 'Master', 350, 30, 45);
