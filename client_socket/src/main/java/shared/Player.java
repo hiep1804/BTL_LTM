@@ -20,24 +20,13 @@ import java.net.Socket;
 class Player implements Serializable{
     private static final long serialVersionUID = 1L;
     private String name;
-    private transient Socket socket;
-    private transient PrintWriter out;
-    private transient BufferedReader in;
-    private transient DataOutputStream dataOut;
-    private transient DataInputStream dataIn;
-    private transient ObjectOutputStream objOut;
-    private transient ObjectInputStream objIn;
     private boolean busy = false;
 
-    public Player(String name, Socket socket) throws Exception {
+    public Player() {
+    }
+
+    public Player(String name) throws Exception {
         this.name = name;
-        this.socket = socket;
-//        this.out = new PrintWriter(socket.getOutputStream(), true);
-//        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        // Trên server, trong Player:
-        this.objOut = new ObjectOutputStream(socket.getOutputStream()); // tạo trước
-        this.objOut.flush(); // flush để header được gửi
-        this.objIn = new ObjectInputStream(socket.getInputStream());
     }
 
     public String getName() {
@@ -48,30 +37,6 @@ class Player implements Serializable{
         this.name = name;
     }
 
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
-    }
-
-    public PrintWriter getOut() {
-        return out;
-    }
-
-    public void setOut(PrintWriter out) {
-        this.out = out;
-    }
-
-    public BufferedReader getIn() {
-        return in;
-    }
-
-    public void setIn(BufferedReader in) {
-        this.in = in;
-    }
-
     public boolean isBusy() {
         return busy;
     }
@@ -79,21 +44,4 @@ class Player implements Serializable{
     public void setBusy(boolean busy) {
         this.busy = busy;
     }
-
-    public ObjectOutputStream getObjOut() {
-        return objOut;
-    }
-
-    public void setObjOut(ObjectOutputStream objOut) {
-        this.objOut = objOut;
-    }
-
-    public ObjectInputStream getObjIn() {
-        return objIn;
-    }
-
-    public void setObjIn(ObjectInputStream objIn) {
-        this.objIn = objIn;
-    }
-    
 }

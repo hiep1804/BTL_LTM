@@ -33,10 +33,12 @@ public class StartGameRoomPanel extends JPanel{
     int offsetX, offsetY;
     //mang de sap xep
     private ArrayList<Integer> arr;
+    private NetworkManager networkManager;
 
-    public StartGameRoomPanel(Player p1, Player p2, ClientMainFrm clientMainFrm) throws IOException, ClassNotFoundException {
+    public StartGameRoomPanel(Player p1, Player p2, ClientMainFrm clientMainFrm,NetworkManager networkManager) throws Exception {
 //        setPreferredSize(new Dimension(800, 600));
         this.clientMainFrm=clientMainFrm;
+        this.networkManager=networkManager;
         this.p1=p1;
         this.p2=p2;
         setLayout(null);
@@ -53,7 +55,7 @@ public class StartGameRoomPanel extends JPanel{
         JLabel diemDoiThu=new JLabel("0");
         diemDoiThu.setBounds(550, 100, 200, 30);
         add(diemDoiThu);
-        ObjectSentReceived objectSentReceived=(ObjectSentReceived) p1.getObjIn().readObject();
+        ObjectSentReceived objectSentReceived=networkManager.receive();
         //lay mang de sap xep
         if(objectSentReceived.getType().equals("mang can sap xep")){
             arr=(ArrayList<Integer>)objectSentReceived.getObj();
@@ -131,13 +133,4 @@ public class StartGameRoomPanel extends JPanel{
         for (Rect s : staticRects) s.draw(g);
         for (Rect m : movableRects) m.draw(g);
     }
-//
-//    public static void main(String[] args) {
-//        JFrame f = new JFrame("Rect Snap Demo");
-//        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        f.add(new StartGameRoomPanel(null,null,null));
-//        f.setSize(800, 600);
-////        f.pack();
-//        f.setVisible(true);
-//    }
 }

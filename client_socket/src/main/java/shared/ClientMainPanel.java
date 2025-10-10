@@ -25,9 +25,11 @@ public class ClientMainPanel extends JPanel {
     private JButton addButton;
     private ObjectSentReceived objectSentReceived;
     private ClientMainFrm clientMainFrm;
+    private NetworkManager networkManager;
 
-    public ClientMainPanel(Player p, ClientMainFrm clientMainFrm) {
+    public ClientMainPanel(Player p, ClientMainFrm clientMainFrm,NetworkManager networkManager) {
         this.clientMainFrm=clientMainFrm;
+        this.networkManager=networkManager;
         this.p = p;
         setLayout(null); // ❌ bỏ Layout Manager, dùng toạ độ tuyệt đối
         JLabel title = new JLabel("Client Main Frame");
@@ -49,7 +51,7 @@ public class ClientMainPanel extends JPanel {
         new Thread(() -> {
             try {
                 while (true) {
-                    ObjectSentReceived objectSentReceived = (ObjectSentReceived) p.getObjIn().readObject();
+                    ObjectSentReceived objectSentReceived = networkManager.receive();
                     System.out.println(objectSentReceived.getType());
                     //them 1 nguoi choi moi vao danh sach neu da online
                     if (objectSentReceived.getType().equals("addPlayerOnline")) {
@@ -78,14 +80,12 @@ public class ClientMainPanel extends JPanel {
                             System.out.println("Bạn chọn: Đồng ý");
                             //gui thong tin dong y thach dau
                             ObjectSentReceived objectSentReceived1=new ObjectSentReceived("accept", player.getName());
-                            p.getObjOut().writeObject(objectSentReceived1);
-                            p.getObjOut().flush();
+                            networkManager.send(objectSentReceived1);
                         } else {
                             System.out.println("Bạn chọn: Từ chối");
                             //gui thong tin tu choi thach dau
                             ObjectSentReceived objectSentReceived1=new ObjectSentReceived("reject", player.getName());
-                            p.getObjOut().writeObject(objectSentReceived1);
-                            p.getObjOut().flush();
+                            networkManager.send(objectSentReceived1);
                         }
                     }
                     if(objectSentReceived.getType().equals("accept challenge")){
@@ -127,9 +127,8 @@ public class ClientMainPanel extends JPanel {
                 //gui loi thach dau
                 ObjectSentReceived objectSentReceived = new ObjectSentReceived("challenge", player.getName());
                 try {
-                    p.getObjOut().writeObject(objectSentReceived);
-                    p.getObjOut().flush();
-                } catch (IOException ex) {
+                    networkManager.send(objectSentReceived);
+                }catch (Exception ex) {
                     Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -142,20 +141,4 @@ public class ClientMainPanel extends JPanel {
         listPanel.repaint();
     }
 
-//    // Test
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> {
-//            JFrame frame = new JFrame("Dynamic Object List (No Layout)");
-//            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//            frame.setSize(800, 600);
-//            frame.setLayout(null); // ❌ bỏ layout
-//            frame.setLocationRelativeTo(null);
-//
-//            ClientMainPanel panel = new ClientMainPanel();
-//            panel.setBounds(0, 0, 800, 600); // 👈 đặt panel chiếm full frame
-//            frame.add(panel);
-//
-//            frame.setVisible(true);
-//        });
-//    }
 }

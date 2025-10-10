@@ -2,6 +2,7 @@ shared\StartGameRoomPanel.class
 shared\Player.class
 shared\StartGameRoomPanel$2.class
 shared\TCPClient.class
+shared\NetworkManager.class
 shared\Rect.class
 shared\ClientMainFrm.class
 shared\ClientMainPanel.class

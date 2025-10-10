@@ -19,14 +19,12 @@ public class ClientMainFrm extends JFrame{
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private Player player = null;
+    private NetworkManager networkManager;
     public ClientMainFrm(){
         try{
-            Socket socket=new Socket("172.11.34.77",59);
-            player=new Player(socket.getInetAddress().getHostAddress(), socket);
-            //Gui thong tin player moi
-//            ObjectSentReceived gui=new ObjectSentReceived("addPlayerOnline",player);
-//            player.getObjOut().writeObject(gui);
-//            player.getObjOut().flush();
+            networkManager=new NetworkManager();
+            networkManager.connect("192.168.1.17", 59);
+            player=new Player(networkManager.getSocket().getInetAddress().getHostAddress());
         }
         catch(Exception e){
             e.printStackTrace();
@@ -35,17 +33,23 @@ public class ClientMainFrm extends JFrame{
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         cardLayout = new CardLayout();
         cardPanel = new JPanel(cardLayout);
-        ClientMainPanel panel=new ClientMainPanel(player,this);
-        panel.setBounds(0, 0, 800, 600);
-        cardPanel.add(panel,"client main frame");
-        cardLayout.show(cardPanel, "client main frame");
         add(cardPanel);
-        //this.pack();
+        setClientGamePanel();
+        showClientGamePanel();
         this.setVisible(true);
     }
+    //ham tao ClientMainPanel va them ClientMainOPanel vao Cardlayout
+    public void setClientGamePanel(){
+        ClientMainPanel panel=new ClientMainPanel(player,this,networkManager);
+        panel.setBounds(0, 0, 800, 600);
+        cardPanel.add(panel,"client main frame");
+    }
+    public void showClientGamePanel(){
+        cardLayout.show(cardPanel, "client main frame");
+    }
     //ham tao StartGameRoomPanel
-    public void setStartGameRoom(Player p) throws IOException, ClassNotFoundException{
-        StartGameRoomPanel startGameRoomPanel=new StartGameRoomPanel(player, p,this);
+    public void setStartGameRoom(Player p) throws IOException, ClassNotFoundException, Exception{
+        StartGameRoomPanel startGameRoomPanel=new StartGameRoomPanel(player, p,this,networkManager);
         cardPanel.add(startGameRoomPanel,"client game panel");
     }
     //ham show StartGameRoomPanel

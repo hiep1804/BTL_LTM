@@ -1,6 +1,7 @@
 E:\project_ltm\client_socket\src\main\java\shared\StartGameRoomPanel.java
 E:\project_ltm\client_socket\src\main\java\shared\TCPClient.java
 E:\project_ltm\client_socket\src\main\java\shared\UDPClient.java
+E:\project_ltm\client_socket\src\main\java\shared\NetworkManager.java
 E:\project_ltm\client_socket\src\main\java\shared\ObjectSentReceived.java
 E:\project_ltm\client_socket\src\main\java\shared\Player.java
 E:\project_ltm\client_socket\src\main\java\shared\Rect.java
