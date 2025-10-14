@@ -10,6 +10,8 @@ package shared.model;
  */
 import java.io.Serializable;
 public class Player implements Serializable{
+    //private int id;
+    private static final long serialVersionUID = 1L; 
     private String username;
     private String password;
     private boolean busy;
@@ -19,6 +21,11 @@ public class Player implements Serializable{
         this.password = password;
         this.busy = false;
     }
+    public Player() {}
+    
+    //Code ngu
+//    public int getId() {return id;}
+//    public void setId(int id) { this.id = id; }
 
     public String getUsername() { return username; }
     public String getPassword() { return password; }

@@ -1,10 +1,12 @@
 package shared;
 import java.net.*;
 import shared.services.RegisterService;
+import shared.services.LoginService;
 
 public class MainServer {
     private final int port;
     private final RegisterService registerService = new RegisterService();
+    private final LoginService loginService = new LoginService();
     
     public MainServer(int port) {
         this.port = port;
@@ -17,7 +19,7 @@ public class MainServer {
             while (true) {
                 Socket s = ss.accept();     //Mỗi client sẽ có 1 luồng socket riêng với server để giao tiếp
                 System.out.println("Client connected: " + s.getInetAddress().getHostAddress());
-                new Thread(new ClientHandler(s, registerService)).start();
+                new Thread(new ClientHandler(s, registerService, loginService)).start();
             }
         } catch (Exception e) {
             e.printStackTrace();

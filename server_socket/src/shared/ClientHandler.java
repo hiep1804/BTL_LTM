@@ -10,14 +10,17 @@ import java.net.Socket;
 import shared.ObjectSentReceived;
 import shared.model.Player;
 import shared.services.RegisterService;
+import shared.services.LoginService;
 
 public class ClientHandler implements Runnable{ 
     private final Socket socket;
     private final RegisterService registerService;
+    private final LoginService loginService;
     
-    public ClientHandler(Socket socket, RegisterService registerService) {
+    public ClientHandler(Socket socket, RegisterService registerService, LoginService loginService) {
         this.socket = socket;
         this.registerService = registerService;
+        this.loginService = loginService;
     }
     
     @Override
@@ -40,17 +43,26 @@ public class ClientHandler implements Runnable{
                     ObjectSentReceived response = new ObjectSentReceived("Register", ok);
                     objOut.writeObject(response);
                     objOut.flush();
+                } else if("Login".equals(type)) {
+                    Player loginPlayer = (Player) request.getObj();
+                    boolean ok = loginService.login(loginPlayer);
+                    
+                    // Trả về đúng format yêu cầu
+                    ObjectSentReceived response = new ObjectSentReceived("Login", ok);
+                    objOut.writeObject(response);
+                    objOut.flush();
+                    
                 } else {
                     // Có thể mở rộng các type khác
                     ObjectSentReceived response =
                             new ObjectSentReceived("Error", "Unsupported type: " + type);
                     objOut.writeObject(response);
                     objOut.flush();
-
                 }
             }
         } catch (Exception e) {
             // Client disconnect hoặc lỗi IO
+            System.out.println("Client disconnected or IO error.");
             e.printStackTrace();
         }
     }

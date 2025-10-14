@@ -40,7 +40,6 @@ public class RegisterService {
                 return rows > 0;
             }
         } catch(Exception e) {
-            e.printStackTrace();
             return false;
         }
     }

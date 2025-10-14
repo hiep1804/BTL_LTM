@@ -6,6 +6,7 @@ package shared;
 import javax.swing.JOptionPane;
 import shared.NetworkManager;
 import shared.model.Player;
+import shared.MainFrm;
 
 
 /**
@@ -14,12 +15,12 @@ import shared.model.Player;
  */
 public class RegisterForm extends javax.swing.JPanel {
     private final NetworkManager network;
-    /**
-     * Creates new form RegisterForm
-     */
-    public RegisterForm(NetworkManager network) {
+private final MainFrm mainFrm;
+
+    public RegisterForm(MainFrm mainFrm, NetworkManager network) {
         initComponents();
         this.network = network;
+        this.mainFrm = mainFrm;
     }
 
     /**
@@ -129,6 +130,7 @@ public class RegisterForm extends javax.swing.JPanel {
                boolean status = (Boolean) resp.getObj();
                if(status) {
                    JOptionPane.showMessageDialog(this, "Đăng ký thành công!");
+                   mainFrm.showPanel(MainFrm.LOGIN_VIEW);
                } else {
                    JOptionPane.showMessageDialog(this, "Đăng ký thất bại!");
                }
