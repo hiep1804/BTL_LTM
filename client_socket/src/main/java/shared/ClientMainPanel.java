@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,7 +64,8 @@ public class ClientMainPanel extends JPanel {
                     }
                     //them danh sach tat ca nguoi choi dang online
                     if (objectSentReceived.getType().equals("loadPlayerOnline")) {
-                        players = (HashMap<String, Player>) objectSentReceived.getObj();
+                        ConcurrentHashMap<String,Player> players1 = (ConcurrentHashMap<String, Player>) objectSentReceived.getObj();
+                        players=new HashMap<>(players1);
                         SwingUtilities.invokeLater(() -> refreshList());
                     }
                     //gui yeu dau den nguoi dang bi thach dau

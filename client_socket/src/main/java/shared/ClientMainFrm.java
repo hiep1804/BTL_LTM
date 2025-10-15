@@ -23,7 +23,7 @@ public class ClientMainFrm extends JFrame{
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("192.168.1.17", 59);
+            networkManager.connect("192.168.1.30", 59);
             player=new Player(networkManager.getSocket().getInetAddress().getHostAddress());
         }
         catch(Exception e){

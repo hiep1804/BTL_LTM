@@ -12,6 +12,7 @@ public class NetworkManager {
     public void connect(Socket socket) throws Exception {
         this.socket = socket;
         objOut = new ObjectOutputStream(socket.getOutputStream());
+        objOut.flush();
         objIn = new ObjectInputStream(socket.getInputStream());
     }
 

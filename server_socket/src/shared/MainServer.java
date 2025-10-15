@@ -11,18 +11,25 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MainServer {
     private ServerSocket ss;
-    private HashMap<String, Player> onlinePlayers = new HashMap<>();
-    private HashMap<String, NetworkManager> onlinePlayersNetwork=new HashMap<>();
+    private ConcurrentHashMap<String, Player> onlinePlayers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork=new ConcurrentHashMap<>();
+    // Thêm ExecutorService
+    private ExecutorService clientExecutor = null;
 
     public MainServer(int port) {
         try {
             ss = new ServerSocket(port);
             System.out.println("Server started...");
+            // (2) Khởi tạo: Ví dụ: Tối đa 100 luồng hoặc dùng cached pool
+            clientExecutor = Executors.newFixedThreadPool(16); 
 
             while (true) {
                 Socket s = ss.accept();
@@ -30,10 +37,10 @@ public class MainServer {
                 NetworkManager networkManager=new NetworkManager();
                 networkManager.connect(s);
                 Player p = new Player(name);
-                updateListPlayerOnline(p,networkManager);
                 
                 System.out.println(name + " đã online.");
-                new Thread(() -> handleClient(p,networkManager)).start();
+                // (3) Thay thế việc tạo luồng bằng cách submit tác vụ vào pool
+                clientExecutor.execute(() -> handleClient(p,networkManager));
             }
 
         } catch (Exception e) {
@@ -55,6 +62,7 @@ public class MainServer {
     }
     private void handleClient(Player p,NetworkManager networkManager){
         try {
+            updateListPlayerOnline(p,networkManager);
             ObjectSentReceived objectSentReceived;
             while ((objectSentReceived =networkManager.receive()) != null) {
                 System.out.println(p.getName() + " gửi: "+objectSentReceived.getType());
@@ -86,7 +94,7 @@ public class MainServer {
                         ObjectSentReceived playerGuiThongTinNguoiThachDau=new ObjectSentReceived("accept challenge", p1);
                         networkManager.send(playerGuiThongTinNguoiThachDau);
                         // Cả hai set busy
-                        p1.setBusy(true);
+                        //p1.setBusy(true);
                         p.setBusy(true);
 
                         // Tạo phòng riêng
