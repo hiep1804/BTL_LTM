@@ -1,15 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package shared;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,7 +50,7 @@ public class ClientMainPanel extends JPanel {
                     //them 1 nguoi choi moi vao danh sach neu da online
                     if (objectSentReceived.getType().equals("addPlayerOnline")) {
                         Player player = (Player) objectSentReceived.getObj();
-                        players.put(player.getName(), player);
+                        players.put(player.getUsername(), player);
 
                         // Cập nhật UI phải chạy trên EDT
                         SwingUtilities.invokeLater(() -> refreshList());
@@ -73,7 +66,7 @@ public class ClientMainPanel extends JPanel {
                         Player player = (Player) objectSentReceived.getObj();
                         int choice = JOptionPane.showConfirmDialog(
                                 this, // parent component (JPanel hoặc JFrame)
-                                "Người chơi "+player.getName()+" muốn thách đấu với bạn. Bạn có đồng ý không?",
+                                "Người chơi "+player.getUsername()+" muốn thách đấu với bạn. Bạn có đồng ý không?",
                                 "Thách đấu",
                                 JOptionPane.YES_NO_OPTION
                         );
@@ -81,12 +74,12 @@ public class ClientMainPanel extends JPanel {
                         if (choice == JOptionPane.YES_OPTION) {
                             System.out.println("Bạn chọn: Đồng ý");
                             //gui thong tin dong y thach dau
-                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("accept", player.getName());
+                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("accept", player.getUsername());
                             networkManager.send(objectSentReceived1);
                         } else {
                             System.out.println("Bạn chọn: Từ chối");
                             //gui thong tin tu choi thach dau
-                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("reject", player.getName());
+                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("reject", player.getUsername());
                             networkManager.send(objectSentReceived1);
                         }
                     }
@@ -113,7 +106,7 @@ public class ClientMainPanel extends JPanel {
             row.setMinimumSize(new Dimension(360, 40));
 
             // Label
-            JLabel nameLabel = new JLabel(player.getName());
+            JLabel nameLabel = new JLabel(player.getUsername());
             nameLabel.setBounds(5, 10, 150, 20);
 
             // Nút thách đấu
@@ -127,7 +120,7 @@ public class ClientMainPanel extends JPanel {
             actionBtn.addActionListener(e
                     -> {
                 //gui loi thach dau
-                ObjectSentReceived objectSentReceived = new ObjectSentReceived("challenge", player.getName());
+                ObjectSentReceived objectSentReceived = new ObjectSentReceived("challenge", player.getUsername());
                 try {
                     networkManager.send(objectSentReceived);
                 }catch (Exception ex) {

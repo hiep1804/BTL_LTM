@@ -49,7 +49,7 @@ public class StartGameRoomPanel extends JPanel{
         // Căn giữa theo chiều dọc
         title.setVerticalAlignment(SwingConstants.CENTER);
         add(title);
-        JLabel tenDoiThu=new JLabel(p2.getName());
+        JLabel tenDoiThu=new JLabel(p2.getUsername());
         tenDoiThu.setBounds(550, 80, 200, 30);
         add(tenDoiThu);
         JLabel diemDoiThu=new JLabel("0");
