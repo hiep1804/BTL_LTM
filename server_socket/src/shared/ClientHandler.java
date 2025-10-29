@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.ArrayList;
 import shared.services.LoginService;
+import shared.services.PlayerService;
 import shared.services.RegisterService;
 
 /**
@@ -20,7 +22,7 @@ public class ClientHandler implements Runnable{
     private final NetworkManager networkManager;
     private final ConcurrentHashMap<String, Player> onlinePlayers;
     private final ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork;
-    
+    private final PlayerService playerService = new PlayerService();
     private final LoginService loginService = new LoginService();
     private final RegisterService registerService = new RegisterService();
     
@@ -64,6 +66,7 @@ public class ClientHandler implements Runnable{
                 System.out.println(player.getUsername() + " send " + msgType);
                 
                 switch (msgType) {
+                    case "getLeaderboard" -> handleGetLeaderboard(message);
                     case "challenge" -> handleChallenge(message);
                     case "accept" -> handleAccept(message);
                     case "reject" -> handleReject(message);
@@ -101,7 +104,14 @@ public class ClientHandler implements Runnable{
             e.printStackTrace();
         }
     }
-    
+    private void handleGetLeaderboard(ObjectSentReceived req) {
+        try {
+            ArrayList<Player> leaderboard = playerService.getLeaderBoard();
+            networkManager.send(new ObjectSentReceived("getLeaderboard", leaderboard));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private void handleRegister(ObjectSentReceived req) {
         try {
             Player p = (Player) req.getObj();

@@ -2,6 +2,7 @@ package shared;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -10,84 +11,96 @@ import java.util.logging.Logger;
 public class ClientMainPanel extends JPanel {
 
     private JPanel listPanel;
-    //thong tin nguoi choi
     private Player p;
-    //danh sach nguoi choi online
     private HashMap<String, Player> players;
     private JScrollPane scrollPane;
-    private JTextField inputField;
-    private JButton addButton;
-    private ObjectSentReceived objectSentReceived;
     private ClientMainFrm clientMainFrm;
     private NetworkManager networkManager;
+    private LeaderboardPanel leaderboardPanel;
 
-    public ClientMainPanel(Player p, ClientMainFrm clientMainFrm,NetworkManager networkManager) {
-        this.clientMainFrm=clientMainFrm;
-        this.networkManager=networkManager;
+    public ClientMainPanel(Player p, ClientMainFrm clientMainFrm, NetworkManager networkManager) {
+        this.clientMainFrm = clientMainFrm;
+        this.networkManager = networkManager;
         this.p = p;
-        setLayout(null); // ❌ bỏ Layout Manager, dùng toạ độ tuyệt đối
+        setLayout(null);
+
         JLabel title = new JLabel("Client Main Frame");
         title.setBounds(300, 30, 200, 30);
-        // Căn giữa theo chiều ngang
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        // Căn giữa theo chiều dọc
         title.setVerticalAlignment(SwingConstants.CENTER);
         add(title);
+
         players = new HashMap<>();
-        // Panel chứa danh sách
         listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
 
-        // ScrollPane bao quanh listPanel
         scrollPane = new JScrollPane(listPanel);
-        scrollPane.setBounds(200, 150, 400, 300); // 👈 tự đặt vị trí + size
+        scrollPane.setBounds(450, 150, 300, 300);
         add(scrollPane);
+
+        leaderboardPanel = new LeaderboardPanel();
+        leaderboardPanel.setBounds(50, 150, 350, 300);
+        add(leaderboardPanel);
+
+        startListening();
+    }
+
+    private void startListening() {
         new Thread(() -> {
             try {
+                networkManager.send(new ObjectSentReceived("getLeaderboard", null));
+
                 while (true) {
-                    ObjectSentReceived objectSentReceived = networkManager.receive();
-                    System.out.println(objectSentReceived.getType());
-                    //them 1 nguoi choi moi vao danh sach neu da online
-                    if (objectSentReceived.getType().equals("addPlayerOnline")) {
-                        Player player = (Player) objectSentReceived.getObj();
-                        players.put(player.getUsername(), player);
+                    ObjectSentReceived received = networkManager.receive();
+                    if (received == null) break;
 
-                        // Cập nhật UI phải chạy trên EDT
-                        SwingUtilities.invokeLater(() -> refreshList());
-                    }
-                    //them danh sach tat ca nguoi choi dang online
-                    if (objectSentReceived.getType().equals("loadPlayerOnline")) {
-                        ConcurrentHashMap<String,Player> players1 = (ConcurrentHashMap<String, Player>) objectSentReceived.getObj();
-                        players=new HashMap<>(players1);
-                        SwingUtilities.invokeLater(() -> refreshList());
-                    }
-                    //gui yeu dau den nguoi dang bi thach dau
-                    if (objectSentReceived.getType().equals("want to challenge")) {
-                        Player player = (Player) objectSentReceived.getObj();
-                        int choice = JOptionPane.showConfirmDialog(
-                                this, // parent component (JPanel hoặc JFrame)
-                                "Người chơi "+player.getUsername()+" muốn thách đấu với bạn. Bạn có đồng ý không?",
-                                "Thách đấu",
-                                JOptionPane.YES_NO_OPTION
-                        );
+                    String type = received.getType();
+                    System.out.println("Received: " + type);
 
-                        if (choice == JOptionPane.YES_OPTION) {
-                            System.out.println("Bạn chọn: Đồng ý");
-                            //gui thong tin dong y thach dau
-                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("accept", player.getUsername());
-                            networkManager.send(objectSentReceived1);
-                        } else {
-                            System.out.println("Bạn chọn: Từ chối");
-                            //gui thong tin tu choi thach dau
-                            ObjectSentReceived objectSentReceived1=new ObjectSentReceived("reject", player.getUsername());
-                            networkManager.send(objectSentReceived1);
+                    SwingUtilities.invokeLater(() -> {
+                        switch (type) {
+                            case "addPlayerOnline" -> {
+                                Player player = (Player) received.getObj();
+                                players.put(player.getUsername(), player);
+                                refreshList();
+                            }
+                            case "loadPlayerOnline" -> {
+                                ConcurrentHashMap<String, Player> players1 = (ConcurrentHashMap<String, Player>) received.getObj();
+                                players = new HashMap<>(players1);
+                                refreshList();
+                            }
+                            case "getLeaderboard" -> {
+                                ArrayList<Player> leaderboard = (ArrayList<Player>) received.getObj();
+                                leaderboardPanel.updateLeaderboard(leaderboard);
+                            }
+                            case "want to challenge" -> {
+                                Player challenger = (Player) received.getObj();
+                                int choice = JOptionPane.showConfirmDialog(
+                                        this,
+                                        "Người chơi " + challenger.getUsername() + " muốn thách đấu với bạn. Bạn có đồng ý không?",
+                                        "Thách đấu",
+                                        JOptionPane.YES_NO_OPTION
+                                );
+                                try {
+                                    if (choice == JOptionPane.YES_OPTION) {
+                                        networkManager.send(new ObjectSentReceived("accept", challenger.getUsername()));
+                                    } else {
+                                        networkManager.send(new ObjectSentReceived("reject", challenger.getUsername()));
+                                    }
+                                } catch (Exception ex) {
+                                    Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            }
+                            case "accept challenge" -> {
+                                try {
+                                    clientMainFrm.setStartGameRoom((Player) received.getObj());
+                                    clientMainFrm.showStartGameRoom();
+                                } catch (Exception ex) {
+                                    Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            }
                         }
-                    }
-                    if(objectSentReceived.getType().equals("accept challenge")){
-                        Player player=(Player)objectSentReceived.getObj();
-                        clientMainFrm.setStartGameRoom(p);
-                        clientMainFrm.showStartGameRoom();
-                    }
+                    });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -95,39 +108,29 @@ public class ClientMainPanel extends JPanel {
         }).start();
     }
 
-    // Làm mới danh sách
     private void refreshList() {
         listPanel.removeAll();
 
         for (Player player : players.values()) {
-            JPanel row = new JPanel(null); // ❌ bỏ layout
-            row.setPreferredSize(new Dimension(360, 40));
-            row.setMaximumSize(new Dimension(360, 40));
-            row.setMinimumSize(new Dimension(360, 40));
+            if (player.getUsername().equals(p.getUsername())) continue;
 
-            // Label
+            JPanel row = new JPanel(new BorderLayout());
+            row.setPreferredSize(new Dimension(280, 40));
+            row.setMaximumSize(new Dimension(280, 40));
+
             JLabel nameLabel = new JLabel(player.getUsername());
-            nameLabel.setBounds(5, 10, 150, 20);
-
-            // Nút thách đấu
             JButton actionBtn = new JButton("Thách đấu");
-            actionBtn.setBounds(200, 5, 70, 30);
 
-            row.add(nameLabel);
-            row.add(actionBtn);
+            row.add(nameLabel, BorderLayout.CENTER);
+            row.add(actionBtn, BorderLayout.EAST);
 
-            // Sự kiện
-            actionBtn.addActionListener(e
-                    -> {
-                //gui loi thach dau
-                ObjectSentReceived objectSentReceived = new ObjectSentReceived("challenge", player.getUsername());
+            actionBtn.addActionListener(e -> {
                 try {
-                    networkManager.send(objectSentReceived);
-                }catch (Exception ex) {
+                    networkManager.send(new ObjectSentReceived("challenge", player.getUsername()));
+                } catch (Exception ex) {
                     Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            }
-            );
+            });
 
             listPanel.add(row);
         }
@@ -135,5 +138,4 @@ public class ClientMainPanel extends JPanel {
         listPanel.revalidate();
         listPanel.repaint();
     }
-
 }
