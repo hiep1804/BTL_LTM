@@ -1,1 +1,27 @@
 /server_socket/dist/
+# Compiled class files
+/server_socket/build/
+/client_socket/target/
+
+# Distribution folder
+/server_socket/dist/
+DBConnection.java
+# NetBeans project specific
+/server_socket/nbproject/private/
+/server_socket/nbproject/genfiles.properties
+/server_socket/manifest.mf
+
+# Maven dependency cache
+.m2/
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.idea/
+*.iml
+.vscode/
