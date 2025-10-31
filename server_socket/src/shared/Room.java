@@ -26,6 +26,7 @@ class Room implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("[Room] Phòng game bắt đầu cho " + p1.getUsername() + " vs " + p2.getUsername());
         // tạo mảng cần sắp xếp
         ArrayList<Integer> arr=new ArrayList<>();
         ArrayList<Integer> arrAfterSort=new ArrayList<>();
@@ -35,14 +36,24 @@ class Room implements Runnable {
             arrAfterSort.add(phanTu);
         }
         Collections.sort(arrAfterSort);
+        System.out.println("[Room] Mảng tạo ra: " + arr);
+        
         try {
+            // Đợi một chút để đảm bảo client đã sẵn sàng
+            Thread.sleep(500);
+            
             ObjectSentReceived mangCanSapXep=new ObjectSentReceived("mang can sap xep",arr);
+            System.out.println("[Room] Gửi mảng cho player 1: " + p1.getUsername());
             networkManager1.send(mangCanSapXep);
+            System.out.println("[Room] Gửi mảng cho player 2: " + p2.getUsername());
             networkManager2.send(mangCanSapXep);
+            System.out.println("[Room] Đã gửi mảng cho cả 2 người chơi");
+            
             // Kết thúc, giải phóng trạng thái busy
             p1.setBusy(false);
             p2.setBusy(false);
         } catch (Exception e) {
+            System.out.println("[Room] Lỗi khi gửi mảng:");
             e.printStackTrace();
         }
     }

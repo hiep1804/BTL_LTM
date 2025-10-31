@@ -2,6 +2,7 @@ package shared;
 
 import java.awt.CardLayout;
 import java.io.IOException;
+import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -29,7 +30,7 @@ public class ClientMainFrm extends JFrame{
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("172.11.49.127", 59);
+            networkManager.connect("192.168.1.4", 59);
         }
         catch(Exception e){
             e.printStackTrace();
@@ -84,9 +85,9 @@ public class ClientMainFrm extends JFrame{
     }
     
     //ham tao StartGameRoomPanel
-    public void setStartGameRoom(Player p) throws IOException, ClassNotFoundException, Exception{
+    public void setStartGameRoom(Player opponent, NetworkManager networkManager) throws IOException, ClassNotFoundException, Exception{
         try {
-            startGameRoomPanel = new StartGameRoomPanel(player, p, this, networkManager);
+            startGameRoomPanel = new StartGameRoomPanel(player, opponent, this, networkManager);
             cardPanel.add(startGameRoomPanel, GAME_ROOM_VIEW);
         } catch (Exception e) {
             e.printStackTrace();
@@ -96,6 +97,17 @@ public class ClientMainFrm extends JFrame{
     public void showStartGameRoom(){
         cardLayout.show(cardPanel, GAME_ROOM_VIEW);
     }
+    
+    // Phương thức để chuyển tiếp mảng cho StartGameRoomPanel
+    public void forwardArrayToGameRoom(ArrayList<Integer> arr) {
+        if (startGameRoomPanel != null) {
+            System.out.println("[ClientMainFrm] Chuyển tiếp mảng cho StartGameRoomPanel");
+            startGameRoomPanel.setArray(arr);
+        } else {
+            System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
+        }
+    }
+    
     // Getter
     public Player getPlayer() {
         return player;

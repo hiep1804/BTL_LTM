@@ -26,9 +26,10 @@ public class NetworkManager {
         this.socket = socket;
     }
     
-    public void send(ObjectSentReceived msg) throws Exception {
+    public synchronized void send(ObjectSentReceived msg) throws Exception {
         objOut.writeObject(msg);
         objOut.flush();
+        objOut.reset();
     }
     
     public ObjectSentReceived receive() throws Exception {

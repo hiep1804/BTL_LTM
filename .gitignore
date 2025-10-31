@@ -5,7 +5,6 @@
 
 # Distribution folder
 /server_socket/dist/
-DBConnection.java
 # NetBeans project specific
 /server_socket/nbproject/private/
 /server_socket/nbproject/genfiles.properties
@@ -16,6 +15,7 @@ DBConnection.java
 
 # Log files
 *.log
+server_socket/src/connection/
 
 # OS generated files
 .DS_Store

@@ -35,7 +35,9 @@ public class LoginService {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
+
         }
     }
 }

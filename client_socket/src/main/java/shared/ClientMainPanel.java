@@ -17,6 +17,8 @@ public class ClientMainPanel extends JPanel {
     private ClientMainFrm clientMainFrm;
     private NetworkManager networkManager;
     private LeaderboardPanel leaderboardPanel;
+    private volatile boolean listening = false;
+    private Thread listenThread;
 
     public ClientMainPanel(Player p, ClientMainFrm clientMainFrm, NetworkManager networkManager) {
         this.clientMainFrm = clientMainFrm;
@@ -45,67 +47,97 @@ public class ClientMainPanel extends JPanel {
         startListening();
     }
 
-    private void startListening() {
-        new Thread(() -> {
+    public void startListening() {
+        if (listening) return;
+        listening = true;
+        listenThread = new Thread(() -> {
             try {
                 networkManager.send(new ObjectSentReceived("getLeaderboard", null));
 
-                while (true) {
+                while (listening) {
                     ObjectSentReceived received = networkManager.receive();
                     if (received == null) break;
 
                     String type = received.getType();
                     System.out.println("Received: " + type);
 
+                    // Lưu reference để dùng trong lambda
+                    final ObjectSentReceived finalReceived = received;
+
                     SwingUtilities.invokeLater(() -> {
-                        switch (type) {
-                            case "addPlayerOnline" -> {
-                                Player player = (Player) received.getObj();
-                                players.put(player.getUsername(), player);
-                                refreshList();
-                            }
-                            case "loadPlayerOnline" -> {
-                                ConcurrentHashMap<String, Player> players1 = (ConcurrentHashMap<String, Player>) received.getObj();
-                                players = new HashMap<>(players1);
-                                refreshList();
-                            }
-                            case "getLeaderboard" -> {
-                                ArrayList<Player> leaderboard = (ArrayList<Player>) received.getObj();
-                                leaderboardPanel.updateLeaderboard(leaderboard);
-                            }
-                            case "want to challenge" -> {
-                                Player challenger = (Player) received.getObj();
-                                int choice = JOptionPane.showConfirmDialog(
-                                        this,
-                                        "Người chơi " + challenger.getUsername() + " muốn thách đấu với bạn. Bạn có đồng ý không?",
-                                        "Thách đấu",
-                                        JOptionPane.YES_NO_OPTION
-                                );
-                                try {
+                        try {
+                            switch (type) {
+                                case "addPlayerOnline" -> {
+                                    Player player = (Player) finalReceived.getObj();
+                                    players.put(player.getUsername(), player);
+                                    refreshList();
+                                }
+                                case "loadPlayerOnline" -> {
+                                    ConcurrentHashMap<String, Player> players1 = (ConcurrentHashMap<String, Player>) finalReceived.getObj();
+                                    players = new HashMap<>(players1);
+                                    refreshList();
+                                }
+                                case "getLeaderboard" -> {
+                                    ArrayList<Player> leaderboard = (ArrayList<Player>) finalReceived.getObj();
+                                    leaderboardPanel.updateLeaderboard(leaderboard);
+                                }
+                                case "want to challenge" -> {
+                                    Player challenger = (Player) finalReceived.getObj();
+                                    int choice = JOptionPane.showConfirmDialog(
+                                            ClientMainPanel.this,
+                                            "Người chơi " + challenger.getUsername() + " muốn thách đấu với bạn. Bạn có đồng ý không?",
+                                            "Thách đấu",
+                                            JOptionPane.YES_NO_OPTION
+                                    );
                                     if (choice == JOptionPane.YES_OPTION) {
                                         networkManager.send(new ObjectSentReceived("accept", challenger.getUsername()));
                                     } else {
                                         networkManager.send(new ObjectSentReceived("reject", challenger.getUsername()));
                                     }
-                                } catch (Exception ex) {
-                                    Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
                                 }
-                            }
-                            case "accept challenge" -> {
-                                try {
-                                    clientMainFrm.setStartGameRoom((Player) received.getObj());
+                                case "start_game" -> {
+                                    Player opponent = (Player) finalReceived.getObj();
+                                    // Dừng listener TRƯỚC KHI tạo StartGameRoomPanel
+                                    stopListening();
+                                    // Chờ một chút để đảm bảo thread đã dừng hoàn toàn
+                                    try {
+                                        Thread.sleep(100);
+                                    } catch (InterruptedException e) {}
+                                    // Bây giờ mới tạo StartGameRoomPanel
+                                    clientMainFrm.setStartGameRoom(opponent, networkManager);
                                     clientMainFrm.showStartGameRoom();
-                                } catch (Exception ex) {
-                                    Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                                case "mang can sap xep" -> {
+                                    // Chuyển tiếp mảng cho StartGameRoomPanel
+                                    System.out.println("[ClientMainPanel] Nhận được mảng, chuyển tiếp cho StartGameRoomPanel");
+                                    ArrayList<Integer> arr = (ArrayList<Integer>) finalReceived.getObj();
+                                    clientMainFrm.forwardArrayToGameRoom(arr);
                                 }
                             }
+                        } catch (Exception ex) {
+                            Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     });
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                if (listening) {
+                    e.printStackTrace();
+                }
             }
-        }).start();
+        }, "ClientListenThread");
+        listenThread.start();
+    }
+
+    public void stopListening() {
+        listening = false;
+        if (listenThread != null) {
+            listenThread.interrupt();
+            try {
+                // Đợi thread listener thoát để tránh 2 thread cùng đọc ObjectInputStream
+                listenThread.join(2000);
+            } catch (InterruptedException ignored) {}
+            listenThread = null;
+        }
     }
 
     private void refreshList() {

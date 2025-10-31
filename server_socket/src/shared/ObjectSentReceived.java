@@ -13,6 +13,7 @@ import java.io.Serializable;
 public class ObjectSentReceived implements Serializable{
     private String type;
     private Object obj;
+    private static final long serialVersionUID = 1L;
 
     public ObjectSentReceived() {
     }

@@ -151,13 +151,18 @@ public class ClientHandler implements Runnable{
         NetworkManager challengerNM = onlinePlayersNetwork.get(challengerName);     //dang null
         
         if(challenger != null) {
-            ObjectSentReceived msg1 = new ObjectSentReceived("accept challenge", player);
-            challengerNM.send(msg1);
-            
-            ObjectSentReceived msg2 = new ObjectSentReceived("accept challenge", challenger);
-            networkManager.send(msg2);
-            
+            // Đánh dấu cả 2 đang bận
             player.setBusy(true);
+            challenger.setBusy(true);
+
+            // Báo cho người thách đấu biết đối thủ đã chấp nhận và gửi thông tin phòng
+            ObjectSentReceived msgToChallenger = new ObjectSentReceived("start_game", player);
+            challengerNM.send(msgToChallenger);
+            
+            // Báo cho người được thách đấu biết để bắt đầu và gửi thông tin phòng
+            ObjectSentReceived msgToAcceptor = new ObjectSentReceived("start_game", challenger);
+            networkManager.send(msgToAcceptor);
+            
             Room room = new Room(challenger, player, challengerNM, networkManager);
             new Thread(room).start();
         }
