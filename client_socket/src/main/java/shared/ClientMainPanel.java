@@ -97,13 +97,7 @@ public class ClientMainPanel extends JPanel {
                                 }
                                 case "start_game" -> {
                                     Player opponent = (Player) finalReceived.getObj();
-                                    // Dừng listener TRƯỚC KHI tạo StartGameRoomPanel
-                                    stopListening();
-                                    // Chờ một chút để đảm bảo thread đã dừng hoàn toàn
-                                    try {
-                                        Thread.sleep(100);
-                                    } catch (InterruptedException e) {}
-                                    // Bây giờ mới tạo StartGameRoomPanel
+                                    // Tạo StartGameRoomPanel ngay
                                     clientMainFrm.setStartGameRoom(opponent, networkManager);
                                     clientMainFrm.showStartGameRoom();
                                 }
@@ -112,6 +106,15 @@ public class ClientMainPanel extends JPanel {
                                     System.out.println("[ClientMainPanel] Nhận được mảng, chuyển tiếp cho StartGameRoomPanel");
                                     ArrayList<Integer> arr = (ArrayList<Integer>) finalReceived.getObj();
                                     clientMainFrm.forwardArrayToGameRoom(arr);
+                                }
+                                case "doi thu thoat" -> {
+                                    // Thông báo cho StartGameRoomPanel
+                                    System.out.println("[ClientMainPanel] Nhận thông báo đối thủ thoát");
+                                    clientMainFrm.notifyOpponentLeft();
+                                }
+                                case "thoat game" -> {
+                                    // Người chơi này đã thoát, không cần làm gì
+                                    System.out.println("[ClientMainPanel] Xác nhận đã thoát game");
                                 }
                             }
                         } catch (Exception ex) {

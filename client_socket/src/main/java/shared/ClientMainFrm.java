@@ -108,6 +108,54 @@ public class ClientMainFrm extends JFrame{
         }
     }
     
+    // Phương thức để thông báo đối thủ thoát cho StartGameRoomPanel
+    public void notifyOpponentLeft() {
+        if (startGameRoomPanel != null) {
+            System.out.println("[ClientMainFrm] Thông báo đối thủ thoát cho StartGameRoomPanel");
+            startGameRoomPanel.handleOpponentLeft();
+        } else {
+            System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
+        }
+    }
+    
+    // Xóa game room panel
+    public void removeGameRoomPanel() {
+        if (startGameRoomPanel != null) {
+            cardPanel.remove(startGameRoomPanel);
+            startGameRoomPanel = null;
+            System.out.println("[ClientMainFrm] Đã xóa StartGameRoomPanel");
+        }
+    }
+    
+    // Reload ClientMainPanel (quay về lobby và refresh)
+    public void reloadClientMainPanel() {
+        try {
+            // Xóa ClientMainPanel cũ nếu có
+            if (clientMainPanel != null) {
+                clientMainPanel.stopListening(); // Dừng listener cũ
+                cardPanel.remove(clientMainPanel);
+                System.out.println("[ClientMainFrm] Đã xóa ClientMainPanel cũ");
+            }
+            
+            // Tạo mới ClientMainPanel
+            clientMainPanel = new ClientMainPanel(player, this, networkManager);
+            cardPanel.add(clientMainPanel, CLIENT_MAIN_VIEW);
+            
+            // Hiển thị ClientMainPanel
+            cardLayout.show(cardPanel, CLIENT_MAIN_VIEW);
+            System.out.println("[ClientMainFrm] Đã reload và hiển thị ClientMainPanel mới");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(
+                this,
+                "Error returning to lobby: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+    
     // Getter
     public Player getPlayer() {
         return player;

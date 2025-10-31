@@ -22,16 +22,19 @@ public class ClientHandler implements Runnable{
     private final NetworkManager networkManager;
     private final ConcurrentHashMap<String, Player> onlinePlayers;
     private final ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork;
+    private final ConcurrentHashMap<String, String> opponentMap; // username -> opponent username
     private final PlayerService playerService = new PlayerService();
     private final LoginService loginService = new LoginService();
     private final RegisterService registerService = new RegisterService();
     
     public ClientHandler(NetworkManager networkManager, 
             ConcurrentHashMap<String, Player> onlinePlayers, 
-            ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork) {
+            ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork,
+            ConcurrentHashMap<String, String> opponentMap) {
         this.networkManager = networkManager;
         this.onlinePlayers = onlinePlayers;
         this.onlinePlayersNetwork = onlinePlayersNetwork;
+        this.opponentMap = opponentMap;
     }
     
     @Override
@@ -70,6 +73,7 @@ public class ClientHandler implements Runnable{
                     case "challenge" -> handleChallenge(message);
                     case "accept" -> handleAccept(message);
                     case "reject" -> handleReject(message);
+                    case "thoat game" -> handleExitGame(message);
                     default -> System.out.println("Unknown message type: " + msgType);
                 }
             }
@@ -154,6 +158,10 @@ public class ClientHandler implements Runnable{
             // Đánh dấu cả 2 đang bận
             player.setBusy(true);
             challenger.setBusy(true);
+            
+            // Lưu thông tin đối thủ vào map (2 chiều)
+            opponentMap.put(player.getUsername(), challengerName);
+            opponentMap.put(challengerName, player.getUsername());
 
             // Báo cho người thách đấu biết đối thủ đã chấp nhận và gửi thông tin phòng
             ObjectSentReceived msgToChallenger = new ObjectSentReceived("start_game", player);
@@ -176,6 +184,32 @@ public class ClientHandler implements Runnable{
         if (opponent != null && !opponent.isBusy()) {
             ObjectSentReceived msg = new ObjectSentReceived("reject challenge", player);
             opponentNM.send(msg);
+        }
+    }
+    
+    private void handleExitGame(ObjectSentReceived req) throws Exception {
+        System.out.println(player.getUsername() + " thoát game");
+        // Đánh dấu không còn bận
+        player.setBusy(false);
+        
+        // Lấy thông tin đối thủ từ map
+        String opponentName = opponentMap.get(player.getUsername());
+        if (opponentName != null) {
+            NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+            if (opponentNM != null) {
+                System.out.println("[ClientHandler] Thông báo cho " + opponentName + " rằng đối thủ đã thoát");
+                opponentNM.send(new ObjectSentReceived("doi thu thoat", null));
+                
+                // Đánh dấu đối thủ cũng không còn bận
+                Player opponent = onlinePlayers.get(opponentName);
+                if (opponent != null) {
+                    opponent.setBusy(false);
+                }
+            }
+            
+            // Xóa cả 2 chiều khỏi map
+            opponentMap.remove(player.getUsername());
+            opponentMap.remove(opponentName);
         }
     }
     

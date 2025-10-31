@@ -39,6 +39,7 @@ public class StartGameRoomPanel extends JPanel{
     //mang de sap xep
     private ArrayList<Integer> arr;
     private NetworkManager networkManager;
+    private volatile boolean listening = true;
 
     public StartGameRoomPanel(Player p1, Player p2, ClientMainFrm clientMainFrm, NetworkManager networkManager) throws Exception {
         this.clientMainFrm=clientMainFrm;
@@ -118,6 +119,37 @@ public class StartGameRoomPanel extends JPanel{
         System.out.println("[StartGameRoomPanel] Constructor hoàn tất, đang chờ nhận mảng...");
     }
     
+    // Phương thức công khai để nhận thông báo đối thủ thoát từ ClientMainPanel
+    public void handleOpponentLeft() {
+        listening = false;
+        javax.swing.JOptionPane.showMessageDialog(
+            this,
+            "Your opponent has left the game.",
+            "Opponent Left",
+            javax.swing.JOptionPane.INFORMATION_MESSAGE
+        );
+        backToLobby();
+    }
+    
+    private void backToLobby() {
+        listening = false;
+        try {
+            // Đánh dấu không còn bận
+            p1.setBusy(false);
+            
+            System.out.println("[StartGameRoomPanel] Quay về lobby...");
+            
+            // Xóa panel game room cũ
+            clientMainFrm.removeGameRoomPanel();
+            
+            // Chỉ hiển thị lại ClientMainPanel cũ (không tạo mới)
+            clientMainFrm.showClientGamePanel();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     // Phương thức công khai để nhận mảng từ bên ngoài
     public void setArray(ArrayList<Integer> array) {
         System.out.println("[StartGameRoomPanel] setArray() được gọi với mảng: " + array);
@@ -151,15 +183,26 @@ public class StartGameRoomPanel extends JPanel{
             System.out.println("[StartGameRoomPanel] CẢNH BÁO: arr là null!");
         }
         
-        // Nút gửi với thiết kế đẹp
-        JButton button = new JButton("✓ Submit Answer");
-        button.setBounds(300, 520, 200, 45);
-        button.setFont(new Font("Arial", Font.BOLD, 16));
-        button.setBackground(new Color(76, 175, 80));
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        add(button);
+        // Nút Submit
+        JButton submitButton = new JButton("✓ Submit Answer");
+        submitButton.setBounds(250, 520, 180, 45);
+        submitButton.setFont(new Font("Arial", Font.BOLD, 16));
+        submitButton.setBackground(new Color(76, 175, 80));
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setFocusPainted(false);
+        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        add(submitButton);
+        
+        // Nút Exit
+        JButton exitButton = new JButton("✕ Exit Game");
+        exitButton.setBounds(450, 520, 150, 45);
+        exitButton.setFont(new Font("Arial", Font.BOLD, 16));
+        exitButton.setBackground(new Color(244, 67, 54));
+        exitButton.setForeground(Color.WHITE);
+        exitButton.setFocusPainted(false);
+        exitButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        exitButton.addActionListener(e -> exitGame());
+        add(exitButton);
         
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -249,5 +292,29 @@ public class StartGameRoomPanel extends JPanel{
         g2d.fillOval(x, y, width/2, height);
         g2d.fillOval(x + width/4, y - height/3, width/2, height);
         g2d.fillOval(x + width/2, y, width/2, height);
+    }
+    
+    private void exitGame() {
+        int choice = javax.swing.JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to exit the game?\nYour opponent will be notified.",
+            "Exit Game",
+            javax.swing.JOptionPane.YES_NO_OPTION,
+            javax.swing.JOptionPane.WARNING_MESSAGE
+        );
+        
+        if (choice == javax.swing.JOptionPane.YES_OPTION) {
+            try {
+                System.out.println("[StartGameRoomPanel] Player exited game");
+                
+                // Gửi thông báo thoát lên server
+                networkManager.send(new ObjectSentReceived("thoat game", null));
+                
+                // Quay về lobby
+                backToLobby();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

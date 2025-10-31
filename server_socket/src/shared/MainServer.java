@@ -14,6 +14,7 @@ public class MainServer {
     private ServerSocket ss;
     private ConcurrentHashMap<String, Player> onlinePlayers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork=new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, String> opponentMap = new ConcurrentHashMap<>(); // username -> opponent username
     // Thêm ExecutorService
     private ExecutorService clientExecutor = null;
     
@@ -31,7 +32,7 @@ public class MainServer {
                 System.out.println("Client " + username + " connected the server");
                 NetworkManager networkManager=new NetworkManager();
                 networkManager.connect(s);
-                clientExecutor.execute(new ClientHandler(networkManager, onlinePlayers, onlinePlayersNetwork));
+                clientExecutor.execute(new ClientHandler(networkManager, onlinePlayers, onlinePlayersNetwork, opponentMap));
             }
 
         } catch (Exception e) {
