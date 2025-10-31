@@ -25,23 +25,75 @@ public class ClientMainPanel extends JPanel {
         this.networkManager = networkManager;
         this.p = p;
         setLayout(null);
+        setBackground(new Color(245, 247, 250));
 
-        JLabel title = new JLabel("Client Main Frame");
-        title.setBounds(300, 30, 200, 30);
+        // Tiêu đề với gradient
+        JLabel title = new JLabel("SẢNH CHỜ") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setFont(getFont());
+                
+                // Vẽ shadow
+                g2d.setColor(new Color(0, 0, 0, 40));
+                g2d.drawString(getText(), (getWidth() - g2d.getFontMetrics().stringWidth(getText())) / 2 + 2, 32);
+                
+                // Vẽ gradient text
+                GradientPaint gp = new GradientPaint(0, 0, new Color(66, 133, 244), 
+                                                      getWidth(), 0, new Color(52, 168, 83));
+                g2d.setPaint(gp);
+                g2d.drawString(getText(), (getWidth() - g2d.getFontMetrics().stringWidth(getText())) / 2, 30);
+            }
+        };
+        title.setBounds(200, 15, 400, 50);
+        title.setFont(new Font("Arial", Font.BOLD, 32));
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        title.setVerticalAlignment(SwingConstants.CENTER);
         add(title);
+        
+        // Welcome message
+        JLabel welcomeLabel = new JLabel("Chào mừng, " + p.getUsername() + "!");
+        welcomeLabel.setBounds(30, 75, 400, 30);
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        welcomeLabel.setForeground(new Color(60, 60, 60));
+        add(welcomeLabel);
 
         players = new HashMap<>();
         listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setBackground(Color.WHITE);
+
+        // Tiêu đề "Online Players" với style đẹp
+        JPanel onlineHeader = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(0, 0, new Color(76, 175, 80), 
+                                                      0, getHeight(), new Color(56, 142, 60));
+                g2d.setPaint(gp);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+            }
+        };
+        onlineHeader.setLayout(null);
+        onlineHeader.setBounds(430, 115, 340, 40);
+        onlineHeader.setOpaque(false);
+        
+        JLabel onlineTitle = new JLabel("Người chơi trực tuyến");
+        onlineTitle.setBounds(15, 0, 310, 40);
+        onlineTitle.setFont(new Font("Arial", Font.BOLD, 16));
+        onlineTitle.setForeground(Color.WHITE);
+        onlineHeader.add(onlineTitle);
+        add(onlineHeader);
 
         scrollPane = new JScrollPane(listPanel);
-        scrollPane.setBounds(450, 150, 300, 300);
+        scrollPane.setBounds(430, 160, 340, 380);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        scrollPane.getViewport().setBackground(Color.WHITE);
         add(scrollPane);
 
         leaderboardPanel = new LeaderboardPanel();
-        leaderboardPanel.setBounds(50, 150, 350, 300);
+        leaderboardPanel.setBounds(30, 115, 380, 425);
         add(leaderboardPanel);
 
         startListening();
@@ -85,7 +137,7 @@ public class ClientMainPanel extends JPanel {
                                     Player challenger = (Player) finalReceived.getObj();
                                     int choice = JOptionPane.showConfirmDialog(
                                             ClientMainPanel.this,
-                                            "Người chơi " + challenger.getUsername() + " muốn thách đấu với bạn. Bạn có đồng ý không?",
+                                            "Người chơi " + challenger.getUsername() + " muốn thách đấu bạn. Bạn có đồng ý không?",
                                             "Thách đấu",
                                             JOptionPane.YES_NO_OPTION
                                     );
@@ -149,15 +201,64 @@ public class ClientMainPanel extends JPanel {
         for (Player player : players.values()) {
             if (player.getUsername().equals(p.getUsername())) continue;
 
-            JPanel row = new JPanel(new BorderLayout());
-            row.setPreferredSize(new Dimension(280, 40));
-            row.setMaximumSize(new Dimension(280, 40));
+            JPanel row = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setColor(new Color(248, 249, 250));
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                    g2d.setColor(new Color(220, 220, 220));
+                    g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+                }
+            };
+            row.setLayout(new BorderLayout(10, 0));
+            row.setPreferredSize(new Dimension(310, 50));
+            row.setMaximumSize(new Dimension(310, 50));
+            row.setOpaque(false);
+            row.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
             JLabel nameLabel = new JLabel(player.getUsername());
-            JButton actionBtn = new JButton("Thách đấu");
+            nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+            nameLabel.setForeground(new Color(50, 50, 50));
 
-            row.add(nameLabel, BorderLayout.CENTER);
-            row.add(actionBtn, BorderLayout.EAST);
+            JButton actionBtn = new JButton("Thách đấu") {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    if (getModel().isPressed()) {
+                        GradientPaint gp = new GradientPaint(0, 0, new Color(230, 74, 25),
+                                                              0, getHeight(), new Color(207, 56, 9));
+                        g2d.setPaint(gp);
+                    } else if (getModel().isRollover()) {
+                        GradientPaint gp = new GradientPaint(0, 0, new Color(255, 120, 80),
+                                                              0, getHeight(), new Color(251, 86, 33));
+                        g2d.setPaint(gp);
+                    } else {
+                        GradientPaint gp = new GradientPaint(0, 0, new Color(255, 87, 34),
+                                                              0, getHeight(), new Color(230, 74, 25));
+                        g2d.setPaint(gp);
+                    }
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                    
+                    // Vẽ text
+                    g2d.setColor(getForeground());
+                    g2d.setFont(getFont());
+                    FontMetrics fm = g2d.getFontMetrics();
+                    int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                    int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                    g2d.drawString(getText(), x, y);
+                }
+            };
+            actionBtn.setFont(new Font("Arial", Font.BOLD, 12));
+            actionBtn.setForeground(Color.WHITE);
+            actionBtn.setPreferredSize(new Dimension(110, 35));
+            actionBtn.setFocusPainted(false);
+            actionBtn.setBorderPainted(false);
+            actionBtn.setContentAreaFilled(false);
+            actionBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
             actionBtn.addActionListener(e -> {
                 try {
@@ -167,7 +268,11 @@ public class ClientMainPanel extends JPanel {
                 }
             });
 
+            row.add(nameLabel, BorderLayout.CENTER);
+            row.add(actionBtn, BorderLayout.EAST);
+
             listPanel.add(row);
+            listPanel.add(Box.createRigidArea(new Dimension(0, 8)));
         }
 
         listPanel.revalidate();

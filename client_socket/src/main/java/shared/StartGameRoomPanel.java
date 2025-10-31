@@ -49,7 +49,7 @@ public class StartGameRoomPanel extends JPanel{
         setLayout(null);
         
         // Tiêu đề game với font đẹp
-        JLabel title = new JLabel("🎈 BALLOON SORT GAME 🎈");
+        JLabel title = new JLabel("TRÒ CHƠI SẮP XẾP BÓNG BAY");
         title.setBounds(200, 20, 400, 50);
         title.setFont(new Font("Arial", Font.BOLD, 28));
         title.setForeground(new Color(255, 107, 107));
@@ -63,7 +63,7 @@ public class StartGameRoomPanel extends JPanel{
         playerPanel.setBackground(new Color(255, 255, 255, 200));
         playerPanel.setBorder(BorderFactory.createLineBorder(new Color(33, 150, 243), 2, true));
         
-        JLabel yourLabel = new JLabel("👤 You");
+        JLabel yourLabel = new JLabel("Bạn");
         yourLabel.setBounds(10, 10, 160, 25);
         yourLabel.setFont(new Font("Arial", Font.BOLD, 16));
         yourLabel.setForeground(new Color(33, 150, 243));
@@ -74,7 +74,7 @@ public class StartGameRoomPanel extends JPanel{
         yourName.setFont(new Font("Arial", Font.PLAIN, 14));
         playerPanel.add(yourName);
         
-        JLabel yourScore = new JLabel("Score: 0");
+        JLabel yourScore = new JLabel("Điểm: 0");
         yourScore.setBounds(10, 70, 160, 25);
         yourScore.setFont(new Font("Arial", Font.BOLD, 14));
         yourScore.setForeground(new Color(76, 175, 80));
@@ -89,7 +89,7 @@ public class StartGameRoomPanel extends JPanel{
         opponentPanel.setBackground(new Color(255, 255, 255, 200));
         opponentPanel.setBorder(BorderFactory.createLineBorder(new Color(255, 87, 34), 2, true));
         
-        JLabel oppLabel = new JLabel("🎯 Opponent");
+        JLabel oppLabel = new JLabel("Đối thủ");
         oppLabel.setBounds(10, 10, 160, 25);
         oppLabel.setFont(new Font("Arial", Font.BOLD, 16));
         oppLabel.setForeground(new Color(255, 87, 34));
@@ -100,7 +100,7 @@ public class StartGameRoomPanel extends JPanel{
         oppName.setFont(new Font("Arial", Font.PLAIN, 14));
         opponentPanel.add(oppName);
         
-        JLabel oppScore = new JLabel("Score: 0");
+        JLabel oppScore = new JLabel("Điểm: 0");
         oppScore.setBounds(10, 70, 160, 25);
         oppScore.setFont(new Font("Arial", Font.BOLD, 14));
         oppScore.setForeground(new Color(255, 87, 34));
@@ -109,7 +109,7 @@ public class StartGameRoomPanel extends JPanel{
         add(opponentPanel);
         
         // Hướng dẫn chơi
-        JLabel instruction = new JLabel("🎯 Drag balloons to sort from smallest to largest!");
+        JLabel instruction = new JLabel("Kéo bóng bay để sắp xếp từ nhỏ đến lớn!");
         instruction.setBounds(150, 220, 500, 30);
         instruction.setFont(new Font("Arial", Font.ITALIC, 16));
         instruction.setForeground(new Color(100, 100, 100));
@@ -124,8 +124,8 @@ public class StartGameRoomPanel extends JPanel{
         listening = false;
         javax.swing.JOptionPane.showMessageDialog(
             this,
-            "Your opponent has left the game.",
-            "Opponent Left",
+            "Đối thủ của bạn đã rời khỏi trò chơi.",
+            "Đối thủ đã rời đi",
             javax.swing.JOptionPane.INFORMATION_MESSAGE
         );
         backToLobby();
@@ -184,7 +184,7 @@ public class StartGameRoomPanel extends JPanel{
         }
         
         // Nút Submit
-        JButton submitButton = new JButton("✓ Submit Answer");
+        JButton submitButton = new JButton("Nộp bài");
         submitButton.setBounds(250, 520, 180, 45);
         submitButton.setFont(new Font("Arial", Font.BOLD, 16));
         submitButton.setBackground(new Color(76, 175, 80));
@@ -194,7 +194,7 @@ public class StartGameRoomPanel extends JPanel{
         add(submitButton);
         
         // Nút Exit
-        JButton exitButton = new JButton("✕ Exit Game");
+        JButton exitButton = new JButton("Thoát");
         exitButton.setBounds(450, 520, 150, 45);
         exitButton.setFont(new Font("Arial", Font.BOLD, 16));
         exitButton.setBackground(new Color(244, 67, 54));
@@ -297,15 +297,15 @@ public class StartGameRoomPanel extends JPanel{
     private void exitGame() {
         int choice = javax.swing.JOptionPane.showConfirmDialog(
             this,
-            "Are you sure you want to exit the game?\nYour opponent will be notified.",
-            "Exit Game",
+            "Bạn có chắc chắn muốn thoát khỏi trò chơi không?",
+            "Thoát trò chơi",
             javax.swing.JOptionPane.YES_NO_OPTION,
             javax.swing.JOptionPane.WARNING_MESSAGE
         );
         
         if (choice == javax.swing.JOptionPane.YES_OPTION) {
             try {
-                System.out.println("[StartGameRoomPanel] Player exited game");
+                System.out.println("[StartGameRoomPanel] Người chơi đã thoát khỏi trò chơi");
                 
                 // Gửi thông báo thoát lên server
                 networkManager.send(new ObjectSentReceived("thoat game", null));

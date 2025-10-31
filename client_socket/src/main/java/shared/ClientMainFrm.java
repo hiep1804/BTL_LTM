@@ -16,8 +16,8 @@ public class ClientMainFrm extends JFrame{
     private NetworkManager networkManager;
     
     //Các panel - giao diện
-    private LoginForm loginPanel;
-    private RegisterForm registerPanel;
+    private JPanel loginPanel;
+    private JPanel registerPanel;
     private ClientMainPanel clientMainPanel;
     private StartGameRoomPanel startGameRoomPanel;
 
@@ -34,7 +34,7 @@ public class ClientMainFrm extends JFrame{
         }
         catch(Exception e){
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không thể kết nối tới server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể kết nối tới máy chủ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         }
         this.setSize(800, 600);
@@ -54,7 +54,7 @@ public class ClientMainFrm extends JFrame{
         this.setVisible(true);
     }
     
-    // 🔹 Khởi tạo và thêm LoginPanel
+    // 🔹 Khởi tạo và thêm LoginPanel (Modern UI)
     private void setLoginPanel() {
         loginPanel = new LoginForm(this, networkManager);
         cardPanel.add(loginPanel, LOGIN_VIEW);
@@ -64,7 +64,7 @@ public class ClientMainFrm extends JFrame{
         cardLayout.show(cardPanel, LOGIN_VIEW);
     }
     
-    //Khởi tạo và thêm RegisterPanel
+    //Khởi tạo và thêm RegisterPanel (Modern UI)
     private void setRegisterPanel() {
         registerPanel = new RegisterForm(this, networkManager);
         cardPanel.add(registerPanel, REGISTER_VIEW);
@@ -149,8 +149,8 @@ public class ClientMainFrm extends JFrame{
             e.printStackTrace();
             JOptionPane.showMessageDialog(
                 this,
-                "Error returning to lobby: " + e.getMessage(),
-                "Error",
+                "Lỗi khi quay lại sảnh: " + e.getMessage(),
+                "Lỗi",
                 JOptionPane.ERROR_MESSAGE
             );
         }
