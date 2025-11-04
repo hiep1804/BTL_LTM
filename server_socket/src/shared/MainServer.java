@@ -14,7 +14,7 @@ public class MainServer {
     private ServerSocket ss;
     private ConcurrentHashMap<String, Player> onlinePlayers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork=new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, String> opponentMap = new ConcurrentHashMap<>(); // username -> opponent username
+    private ConcurrentHashMap<String, String> opponentMap = new ConcurrentHashMap<>(); 
     // Thêm ExecutorService
     private ExecutorService clientExecutor = null;
     

@@ -54,7 +54,7 @@ public class LoginForm extends JPanel {
         loginCard.setOpaque(false);
 
         // Title
-        JLabel titleLabel = new JLabel("ĐĂNG NHẬP") {
+        JLabel titleLabel = new JLabel("LOGIN") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g;
@@ -75,7 +75,7 @@ public class LoginForm extends JPanel {
         loginCard.add(titleLabel);
 
         // Username label
-        JLabel usernameLabel = new JLabel("Tên đăng nhập");
+        JLabel usernameLabel = new JLabel("Username");
         usernameLabel.setBounds(40, 100, 270, 25);
         usernameLabel.setFont(new Font("Arial", Font.BOLD, 14));
         usernameLabel.setForeground(new Color(80, 80, 80));
@@ -108,7 +108,7 @@ public class LoginForm extends JPanel {
         loginCard.add(usernameField);
 
         // Password label
-        JLabel passwordLabel = new JLabel("Mật khẩu");
+        JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setBounds(40, 190, 270, 25);
         passwordLabel.setFont(new Font("Arial", Font.BOLD, 14));
         passwordLabel.setForeground(new Color(80, 80, 80));
@@ -141,7 +141,7 @@ public class LoginForm extends JPanel {
         loginCard.add(passwordField);
 
         // Login button
-        JButton loginButton = new JButton("ĐĂNG NHẬP") {
+        JButton loginButton = new JButton("LOGIN") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g;
@@ -182,15 +182,10 @@ public class LoginForm extends JPanel {
         loginCard.add(loginButton);
 
         // Register link
-        JButton registerButton = new JButton("Chưa có tài khoản? Đăng ký tại đây") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                // No background, just text
-            }
-        };
+        JButton registerButton = new JButton("Don't have an account? Register here");
         registerButton.setBounds(40, 340, 270, 25);
         registerButton.setFont(new Font("Arial", Font.PLAIN, 12));
-        registerButton.setForeground(new Color(66, 133, 244));
+        registerButton.setForeground(Color.BLACK);
         registerButton.setFocusPainted(false);
         registerButton.setBorderPainted(false);
         registerButton.setContentAreaFilled(false);
@@ -207,7 +202,7 @@ public class LoginForm extends JPanel {
         String password = new String(passwordField.getPassword()).trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please fill in all fields!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -220,16 +215,16 @@ public class LoginForm extends JPanel {
             if ("Login".equals(resp.getType())) {
                 boolean status = (Boolean) resp.getObj();
                 if (status) {
-                    JOptionPane.showMessageDialog(this, "Đăng nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
                     mainFrm.setClientGamePanel(player);
                     mainFrm.showClientGamePanel();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không hợp lệ!", "Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Invalid username or password!", "Login Failed", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Connection error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

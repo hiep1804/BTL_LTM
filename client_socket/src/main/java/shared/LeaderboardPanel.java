@@ -5,11 +5,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LeaderboardPanel extends JPanel {
     private JTable leaderboardTable;
     private final DefaultTableModel tableModel;
+    private List<Player> leaderboardData = new ArrayList<>();
 
     public LeaderboardPanel() {
         setLayout(null);
@@ -77,6 +81,20 @@ public class LeaderboardPanel extends JPanel {
         leaderboardTable.setSelectionForeground(Color.BLACK);
         leaderboardTable.setShowGrid(true);
         leaderboardTable.setGridColor(new Color(240, 240, 240));
+    leaderboardTable.setToolTipText("Nhấn vào một người chơi để xem chi tiết");
+        leaderboardTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        leaderboardTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) {
+                    int row = leaderboardTable.rowAtPoint(e.getPoint());
+                    if (row >= 0 && row < leaderboardData.size()) {
+                        leaderboardTable.setRowSelectionInterval(row, row);
+                        showPlayerInfo(leaderboardData.get(row));
+                    }
+                }
+            }
+        });
         
         // Custom header
         JTableHeader tableHeader = leaderboardTable.getTableHeader();
@@ -146,22 +164,82 @@ public class LeaderboardPanel extends JPanel {
         add(container);
     }
 
+    private void showPlayerInfo(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        Window parentWindow = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(parentWindow, "Thông tin người chơi", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setResizable(false);
+
+        PlayerInfoPanel infoPanel = new PlayerInfoPanel(player);
+
+        JPanel footer = new JPanel();
+        footer.setOpaque(false);
+        footer.setBorder(BorderFactory.createEmptyBorder(10, 0, 15, 0));
+
+        JButton closeButton = new JButton("Đóng") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                GradientPaint gp = new GradientPaint(0, 0, new Color(142, 45, 226),
+                                                      0, getHeight(), new Color(74, 0, 224));
+                g2d.setPaint(gp);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+
+                g2d.setColor(getForeground());
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+            }
+        };
+        closeButton.setPreferredSize(new Dimension(120, 38));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFont(new Font("Arial", Font.BOLD, 14));
+        closeButton.setFocusPainted(false);
+        closeButton.setContentAreaFilled(false);
+        closeButton.setBorderPainted(false);
+        closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        footer.add(closeButton);
+
+        dialog.getContentPane().setLayout(new BorderLayout());
+        dialog.getContentPane().add(infoPanel, BorderLayout.CENTER);
+        dialog.getContentPane().add(footer, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentWindow);
+        dialog.setVisible(true);
+    }
+
     public void updateLeaderboard(ArrayList<Player> leaderboard) {
-        // Xóa dữ liệu cũ
         tableModel.setRowCount(0);
 
-        // Thêm dữ liệu mới
         if (leaderboard != null) {
-            for (int i = 0; i < leaderboard.size(); i++) {
-                Player player = leaderboard.get(i);
-                Object[] row = {
-                    i + 1,
-                    player.getName(),
-                    player.getTotalScore(),
-                    player.getTotalWins()
-                };
-                tableModel.addRow(row);
-            }
+            leaderboardData = new ArrayList<>(leaderboard);
+        } else {
+            leaderboardData = new ArrayList<>();
+        }
+
+        for (int i = 0; i < leaderboardData.size(); i++) {
+            Player player = leaderboardData.get(i);
+            String displayName = (player.getName() != null && !player.getName().isBlank())
+                    ? player.getName()
+                    : player.getUsername();
+            Object[] row = {
+                i + 1,
+                displayName,
+                player.getTotalScore(),
+                player.getTotalWins()
+            };
+            tableModel.addRow(row);
         }
     }
 }
