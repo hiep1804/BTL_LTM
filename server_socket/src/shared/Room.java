@@ -22,7 +22,7 @@ class Room implements Runnable {
     private ArrayList<Integer> sortedArray = new ArrayList<>();
     private String firstCorrectSubmitter = null;
     private static final int TOTAL_ROUNDS = 3;
-    private static final int ROUND_TIME_SECONDS = 20;
+    private static final int ROUND_TIME_SECONDS = 30;
     private int currentRound = 0;
 
     public Room(Player p1, Player p2, NetworkManager networkManager1, NetworkManager networkManager2) {
