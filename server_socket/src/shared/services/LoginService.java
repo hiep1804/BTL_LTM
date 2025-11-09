@@ -24,14 +24,23 @@ public class LoginService {
          try(Connection conn = DBConnection.connect()) {
             if(conn == null)        return false;
             
-            //Đếm số lượng bản ghi phù hợp
-            String sql = "SELECT COUNT(*) FROM players  WHERE username = ? AND password = ?";
+            // Lấy thông tin đầy đủ của người chơi
+            String sql = "SELECT username, name, total_score, total_wins, matches_played FROM players WHERE username = ? AND password = ?";
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setString(1, u);
                 stmt.setString(2, password);
                 
                 try (ResultSet rs = stmt.executeQuery()) {
-                    return rs.next() && rs.getInt(1) > 0;
+                    if (rs.next()) {
+                        // Cập nhật thông tin vào object Player
+                        p.setUsername(rs.getString("username"));
+                        p.setName(rs.getString("name"));
+                        p.setTotalScore(rs.getInt("total_score"));
+                        p.setTotalWins(rs.getInt("total_wins"));
+                        p.setMatchesPlayed(rs.getInt("matches_played"));
+                        return true;
+                    }
+                    return false;
                 }
             }
         } catch (Exception e) {

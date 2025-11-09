@@ -2,7 +2,6 @@ package shared;
 
 import java.awt.CardLayout;
 import java.io.IOException;
-import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -30,7 +29,7 @@ public class ClientMainFrm extends JFrame{
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("172.11.122.75", 59);
+            networkManager.connect("192.168.1.96", 59);
         }
         catch(Exception e){
             e.printStackTrace();
@@ -98,11 +97,36 @@ public class ClientMainFrm extends JFrame{
         cardLayout.show(cardPanel, GAME_ROOM_VIEW);
     }
     
-    // Phương thức để chuyển tiếp mảng cho StartGameRoomPanel
-    public void forwardArrayToGameRoom(ArrayList<Integer> arr) {
+
+
+    public void forwardScoreUpdate(ScoreUpdate scoreUpdate) {
         if (startGameRoomPanel != null) {
-            System.out.println("[ClientMainFrm] Chuyển tiếp mảng cho StartGameRoomPanel");
-            startGameRoomPanel.setArray(arr);
+            startGameRoomPanel.updateScores(scoreUpdate);
+        } else {
+            System.out.println("[ClientMainFrm] CẢNH BÁO: chưa có StartGameRoomPanel để cập nhật điểm!");
+        }
+    }
+    
+    public void forwardRoundInfo(RoundInfo roundInfo) {
+        if (startGameRoomPanel != null) {
+            System.out.println("[ClientMainFrm] Chuyển tiếp thông tin ván đấu cho StartGameRoomPanel");
+            startGameRoomPanel.startNewRound(roundInfo);
+        } else {
+            System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
+        }
+    }
+    
+    public void forwardRoundEnd(ScoreUpdate scoreUpdate) {
+        if (startGameRoomPanel != null) {
+            startGameRoomPanel.handleRoundEnd(scoreUpdate);
+        } else {
+            System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
+        }
+    }
+    
+    public void forwardGameOver(ScoreUpdate finalScore) {
+        if (startGameRoomPanel != null) {
+            startGameRoomPanel.handleGameOver(finalScore);
         } else {
             System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
         }

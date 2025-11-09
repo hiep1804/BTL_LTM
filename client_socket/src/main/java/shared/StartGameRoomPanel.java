@@ -5,7 +5,6 @@
 package shared;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
@@ -15,11 +14,9 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -30,7 +27,6 @@ import javax.swing.SwingConstants;
  */
 public class StartGameRoomPanel extends JPanel{
     private Player p1;
-    private Player p2;
     private ClientMainFrm clientMainFrm;
     ArrayList<Rect> staticRects = new ArrayList<>();
     ArrayList<Rect> movableRects = new ArrayList<>();
@@ -39,13 +35,22 @@ public class StartGameRoomPanel extends JPanel{
     //mang de sap xep
     private ArrayList<Integer> arr;
     private NetworkManager networkManager;
-    private volatile boolean listening = true;
+    private JLabel yourScoreLabel;
+    private JLabel oppScoreLabel;
+    private JLabel roundLabel;
+    private JLabel timerLabel;
+    private JButton submitButton;
+    private int currentRound = 0;
+    private int totalRounds = 0;
+    private long roundStartTime = 0;
+    private int roundTimeSeconds = 0;
+    private javax.swing.Timer countdownTimer;
+    private boolean hasSubmitted = false;
 
     public StartGameRoomPanel(Player p1, Player p2, ClientMainFrm clientMainFrm, NetworkManager networkManager) throws Exception {
         this.clientMainFrm=clientMainFrm;
         this.networkManager=networkManager;
         this.p1=p1;
-        this.p2=p2;
         setLayout(null);
         
         // Tiêu đề game với font đẹp
@@ -74,11 +79,11 @@ public class StartGameRoomPanel extends JPanel{
         yourName.setFont(new Font("Arial", Font.PLAIN, 14));
         playerPanel.add(yourName);
         
-        JLabel yourScore = new JLabel("Điểm: 0");
-        yourScore.setBounds(10, 70, 160, 25);
-        yourScore.setFont(new Font("Arial", Font.BOLD, 14));
-        yourScore.setForeground(new Color(76, 175, 80));
-        playerPanel.add(yourScore);
+    yourScoreLabel = new JLabel("Điểm: 0");
+    yourScoreLabel.setBounds(10, 70, 160, 25);
+    yourScoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    yourScoreLabel.setForeground(new Color(76, 175, 80));
+    playerPanel.add(yourScoreLabel);
         
         add(playerPanel);
         
@@ -100,13 +105,28 @@ public class StartGameRoomPanel extends JPanel{
         oppName.setFont(new Font("Arial", Font.PLAIN, 14));
         opponentPanel.add(oppName);
         
-        JLabel oppScore = new JLabel("Điểm: 0");
-        oppScore.setBounds(10, 70, 160, 25);
-        oppScore.setFont(new Font("Arial", Font.BOLD, 14));
-        oppScore.setForeground(new Color(255, 87, 34));
-        opponentPanel.add(oppScore);
+    oppScoreLabel = new JLabel("Điểm: 0");
+    oppScoreLabel.setBounds(10, 70, 160, 25);
+    oppScoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    oppScoreLabel.setForeground(new Color(255, 87, 34));
+    opponentPanel.add(oppScoreLabel);
         
         add(opponentPanel);
+        
+        // Thông tin ván và thời gian ở giữa
+        roundLabel = new JLabel("Đang chờ bắt đầu...");
+        roundLabel.setBounds(250, 80, 300, 30);
+        roundLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        roundLabel.setForeground(new Color(255, 107, 107));
+        roundLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        add(roundLabel);
+        
+        timerLabel = new JLabel("00:00");
+        timerLabel.setBounds(250, 115, 300, 40);
+        timerLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        timerLabel.setForeground(new Color(255, 152, 0));
+        timerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        add(timerLabel);
         
         // Hướng dẫn chơi
         JLabel instruction = new JLabel("Kéo bóng bay để sắp xếp từ nhỏ đến lớn!");
@@ -116,12 +136,11 @@ public class StartGameRoomPanel extends JPanel{
         instruction.setHorizontalAlignment(SwingConstants.CENTER);
         add(instruction);
         
-        System.out.println("[StartGameRoomPanel] Constructor hoàn tất, đang chờ nhận mảng...");
+        System.out.println("[StartGameRoomPanel] Constructor hoàn tất, đang chờ nhận ván đấu...");
     }
     
     // Phương thức công khai để nhận thông báo đối thủ thoát từ ClientMainPanel
     public void handleOpponentLeft() {
-        listening = false;
         javax.swing.JOptionPane.showMessageDialog(
             this,
             "Đối thủ của bạn đã rời khỏi trò chơi.",
@@ -132,37 +151,83 @@ public class StartGameRoomPanel extends JPanel{
     }
     
     private void backToLobby() {
-        listening = false;
         try {
             // Đánh dấu không còn bận
             p1.setBusy(false);
             
             System.out.println("[StartGameRoomPanel] Quay về lobby...");
             
+            // Yêu cầu refresh thông tin người chơi từ server
+            try {
+                networkManager.send(new ObjectSentReceived("refreshPlayerInfo", null));
+                System.out.println("[StartGameRoomPanel] Đã gửi yêu cầu refresh thông tin");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            
             // Xóa panel game room cũ
             clientMainFrm.removeGameRoomPanel();
             
-            // Chỉ hiển thị lại ClientMainPanel cũ (không tạo mới)
-            clientMainFrm.showClientGamePanel();
+            // Reload ClientMainPanel để hiển thị dữ liệu mới
+            clientMainFrm.reloadClientMainPanel();
             
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     
-    // Phương thức công khai để nhận mảng từ bên ngoài
-    public void setArray(ArrayList<Integer> array) {
-        System.out.println("[StartGameRoomPanel] setArray() được gọi với mảng: " + array);
-        this.arr = array;
+    // Phương thức công khai để bắt đầu ván đấu mới
+    public void startNewRound(RoundInfo roundInfo) {
+        System.out.println("[StartGameRoomPanel] Bắt đầu ván " + roundInfo.getCurrentRound());
+        
+        this.currentRound = roundInfo.getCurrentRound();
+        this.totalRounds = roundInfo.getTotalRounds();
+        this.roundTimeSeconds = roundInfo.getTimeSeconds();
+        this.arr = roundInfo.getArray();
+        this.roundStartTime = System.currentTimeMillis();
+        this.hasSubmitted = false;
+        
         javax.swing.SwingUtilities.invokeLater(() -> {
-            System.out.println("[StartGameRoomPanel] Khởi tạo giao diện game...");
+            roundLabel.setText("VÁN " + currentRound + "/" + totalRounds);
             initializeGame();
+            startCountdown();
             repaint();
         });
     }
     
+    private void startCountdown() {
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
+        
+        countdownTimer = new javax.swing.Timer(100, e -> {
+            long elapsed = System.currentTimeMillis() - roundStartTime;
+            long remaining = (roundTimeSeconds * 1000L) - elapsed;
+            
+            if (remaining <= 0) {
+                timerLabel.setText("00:00");
+                timerLabel.setForeground(Color.RED);
+                countdownTimer.stop();
+            } else {
+                int seconds = (int)(remaining / 1000);
+                int millis = (int)((remaining % 1000) / 100);
+                timerLabel.setText(String.format("%02d:%d", seconds, millis));
+                
+                // Đổi màu khi còn 5 giây
+                if (seconds <= 5) {
+                    timerLabel.setForeground(Color.RED);
+                } else {
+                    timerLabel.setForeground(new Color(255, 152, 0));
+                }
+            }
+        });
+        countdownTimer.start();
+    }
+    
     private void initializeGame() {
         System.out.println("[StartGameRoomPanel] initializeGame() được gọi");
+        staticRects.clear();
+        movableRects.clear();
         
         // Kích thước bóng bay lớn hơn
         int balloonSize = 70;
@@ -183,15 +248,19 @@ public class StartGameRoomPanel extends JPanel{
             System.out.println("[StartGameRoomPanel] CẢNH BÁO: arr là null!");
         }
         
-        // Nút Submit
-        JButton submitButton = new JButton("Nộp bài");
-        submitButton.setBounds(250, 520, 180, 45);
-        submitButton.setFont(new Font("Arial", Font.BOLD, 16));
-        submitButton.setBackground(new Color(76, 175, 80));
-        submitButton.setForeground(Color.WHITE);
-        submitButton.setFocusPainted(false);
-        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        add(submitButton);
+        // Nút Submit (chỉ tạo 1 lần nếu chưa có)
+        if (submitButton == null) {
+            submitButton = new JButton("Nộp bài");
+            submitButton.setBounds(250, 520, 180, 45);
+            submitButton.setFont(new Font("Arial", Font.BOLD, 16));
+            submitButton.setBackground(new Color(76, 175, 80));
+            submitButton.setForeground(Color.WHITE);
+            submitButton.setFocusPainted(false);
+            submitButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            submitButton.addActionListener(e -> submitAnswer());
+            add(submitButton);
+        }
+        submitButton.setEnabled(true);
         
         // Nút Exit
         JButton exitButton = new JButton("Thoát");
@@ -208,6 +277,12 @@ public class StartGameRoomPanel extends JPanel{
             public void mousePressed(MouseEvent e) {
                 for (Rect r : movableRects) {
                     if (r.getBounds().contains(e.getPoint())) {
+                        // Clear any previous assignment of this value on the target row
+                        for (Rect s : staticRects) {
+                            if (r.getValue().equals(s.getValue())) {
+                                s.setValue("");
+                            }
+                        }
                         dragging = r;
                         offsetX = e.getX() - r.getX();
                         offsetY = e.getY() - r.getY();
@@ -260,6 +335,168 @@ public class StartGameRoomPanel extends JPanel{
                 }
             }
         });
+    }
+
+    private void submitAnswer() {
+        if (hasSubmitted) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Bạn đã nộp bài rồi!",
+                "Thông báo",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
+        
+        if (staticRects.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Chưa có dữ liệu để nộp bài.",
+                "Thông báo",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
+
+        ArrayList<Integer> submission = new ArrayList<>();
+        for (Rect s : staticRects) {
+            String value = s.getValue();
+            if (value == null || value.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng sắp xếp đủ 8 quả bóng trước khi nộp bài.",
+                    "Thiếu dữ liệu",
+                    javax.swing.JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+            try {
+                submission.add(Integer.parseInt(value));
+            } catch (NumberFormatException ex) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Phát hiện giá trị không hợp lệ: " + value,
+                    "Lỗi",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+        }
+
+        try {
+            hasSubmitted = true;
+            submitButton.setEnabled(false);
+            networkManager.send(new ObjectSentReceived("submit_array", submission));
+            System.out.println("[StartGameRoomPanel] Đã gửi bài nộp");
+        } catch (Exception ex) {
+            hasSubmitted = false;
+            submitButton.setEnabled(true);
+            ex.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Không thể gửi kết quả lên máy chủ. Vui lòng thử lại.",
+                "Lỗi kết nối",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    public void updateScores(ScoreUpdate update) {
+        if (update == null) {
+            return;
+        }
+
+        String username = p1.getUsername();
+        boolean playerIsFirst = username.equals(update.getPlayer1Username());
+
+        if (playerIsFirst) {
+            yourScoreLabel.setText("Điểm: " + update.getPlayer1Score());
+            oppScoreLabel.setText("Điểm: " + update.getPlayer2Score());
+        } else {
+            yourScoreLabel.setText("Điểm: " + update.getPlayer2Score());
+            oppScoreLabel.setText("Điểm: " + update.getPlayer1Score());
+        }
+
+        if (username.equals(update.getSubmitterUsername())) {
+            if (update.isCorrect()) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Bạn đã sắp xếp đúng!",
+                    "Chính xác",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+                );
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Kết quả chưa đúng, hãy thử lại nhé.",
+                    "Chưa chính xác",
+                    javax.swing.JOptionPane.WARNING_MESSAGE
+                );
+            }
+        }
+    }
+    
+    public void handleRoundEnd(ScoreUpdate update) {
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
+        
+        // Cập nhật điểm cuối ván
+        String username = p1.getUsername();
+        boolean playerIsFirst = username.equals(update.getPlayer1Username());
+        
+        if (playerIsFirst) {
+            yourScoreLabel.setText("Điểm: " + update.getPlayer1Score());
+            oppScoreLabel.setText("Điểm: " + update.getPlayer2Score());
+        } else {
+            yourScoreLabel.setText("Điểm: " + update.getPlayer2Score());
+            oppScoreLabel.setText("Điểm: " + update.getPlayer1Score());
+        }
+        
+        roundLabel.setText("Kết thúc ván " + currentRound);
+        timerLabel.setText("00:00");
+    }
+    
+    public void handleGameOver(ScoreUpdate finalScore) {
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
+        
+        // Cập nhật điểm cuối cùng
+        String username = p1.getUsername();
+        boolean playerIsFirst = username.equals(finalScore.getPlayer1Username());
+        
+        int yourScore, oppScore;
+        if (playerIsFirst) {
+            yourScore = finalScore.getPlayer1Score();
+            oppScore = finalScore.getPlayer2Score();
+        } else {
+            yourScore = finalScore.getPlayer2Score();
+            oppScore = finalScore.getPlayer1Score();
+        }
+        
+        yourScoreLabel.setText("Điểm: " + yourScore);
+        oppScoreLabel.setText("Điểm: " + oppScore);
+        
+        // Hiển thị kết quả
+        String result;
+        if (yourScore > oppScore) {
+            result = "BẠN THẮNG!\n\nTỉ số: " + yourScore + " - " + oppScore;
+        } else if (yourScore < oppScore) {
+            result = "BẠN THUA!\n\nTỉ số: " + yourScore + " - " + oppScore;
+        } else {
+            result = "BẠN HÒA!\n\nTỉ số: " + yourScore + " - " + oppScore;
+        }
+        
+        javax.swing.JOptionPane.showMessageDialog(
+            this,
+            result,
+            "KẾT THÚC TRẬN ĐẤU",
+            javax.swing.JOptionPane.INFORMATION_MESSAGE
+        );
+        
+        // Quay về lobby
+        backToLobby();
     }
 
     @Override

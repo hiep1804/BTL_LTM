@@ -23,6 +23,7 @@ public class ClientHandler implements Runnable{
     private final ConcurrentHashMap<String, Player> onlinePlayers;
     private final ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork;
     private final ConcurrentHashMap<String, String> opponentMap; // username -> opponent username
+    private final ConcurrentHashMap<String, Room> roomMap;
     private final PlayerService playerService = new PlayerService();
     private final LoginService loginService = new LoginService();
     private final RegisterService registerService = new RegisterService();
@@ -30,11 +31,13 @@ public class ClientHandler implements Runnable{
     public ClientHandler(NetworkManager networkManager, 
             ConcurrentHashMap<String, Player> onlinePlayers, 
             ConcurrentHashMap<String, NetworkManager> onlinePlayersNetwork,
-            ConcurrentHashMap<String, String> opponentMap) {
+            ConcurrentHashMap<String, String> opponentMap,
+            ConcurrentHashMap<String, Room> roomMap) {
         this.networkManager = networkManager;
         this.onlinePlayers = onlinePlayers;
         this.onlinePlayersNetwork = onlinePlayersNetwork;
         this.opponentMap = opponentMap;
+        this.roomMap = roomMap;
     }
     
     @Override
@@ -70,10 +73,12 @@ public class ClientHandler implements Runnable{
                 
                 switch (msgType) {
                     case "getLeaderboard" -> handleGetLeaderboard(message);
+                    case "refreshPlayerInfo" -> handleRefreshPlayerInfo(message);
                     case "challenge" -> handleChallenge(message);
                     case "accept" -> handleAccept(message);
                     case "reject" -> handleReject(message);
                     case "thoat game" -> handleExitGame(message);
+                    case "submit_array" -> handleSubmitArray(message);
                     default -> System.out.println("Unknown message type: " + msgType);
                 }
             }
@@ -116,6 +121,29 @@ public class ClientHandler implements Runnable{
             e.printStackTrace();
         }
     }
+    
+    private void handleRefreshPlayerInfo(ObjectSentReceived req) {
+        try {
+            // Lấy thông tin mới nhất từ database
+            Player updatedPlayer = playerService.getPlayer(player.getUsername());
+            if (updatedPlayer != null) {
+                // Cập nhật thông tin trong bộ nhớ
+                player.setTotalScore(updatedPlayer.getTotalScore());
+                player.setTotalWins(updatedPlayer.getTotalWins());
+                player.setMatchesPlayed(updatedPlayer.getMatchesPlayed());
+                
+                // Cập nhật trong map
+                onlinePlayers.put(player.getUsername(), player);
+                
+                // Gửi thông tin mới về client
+                networkManager.send(new ObjectSentReceived("refreshPlayerInfo", player));
+                System.out.println("[ClientHandler] Đã refresh thông tin cho " + player.getUsername());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     private void handleRegister(ObjectSentReceived req) {
         try {
             Player p = (Player) req.getObj();
@@ -172,6 +200,8 @@ public class ClientHandler implements Runnable{
             networkManager.send(msgToAcceptor);
             
             Room room = new Room(challenger, player, challengerNM, networkManager);
+            roomMap.put(player.getUsername(), room);
+            roomMap.put(challengerName, room);
             new Thread(room).start();
         }
     }
@@ -191,7 +221,7 @@ public class ClientHandler implements Runnable{
         System.out.println(player.getUsername() + " thoát game");
         // Đánh dấu không còn bận
         player.setBusy(false);
-        
+
         // Lấy thông tin đối thủ từ map
         String opponentName = opponentMap.get(player.getUsername());
         if (opponentName != null) {
@@ -199,17 +229,59 @@ public class ClientHandler implements Runnable{
             if (opponentNM != null) {
                 System.out.println("[ClientHandler] Thông báo cho " + opponentName + " rằng đối thủ đã thoát");
                 opponentNM.send(new ObjectSentReceived("doi thu thoat", null));
-                
+
                 // Đánh dấu đối thủ cũng không còn bận
                 Player opponent = onlinePlayers.get(opponentName);
                 if (opponent != null) {
                     opponent.setBusy(false);
                 }
             }
-            
+
             // Xóa cả 2 chiều khỏi map
             opponentMap.remove(player.getUsername());
             opponentMap.remove(opponentName);
+
+            Room room = roomMap.remove(player.getUsername());
+            if (room != null) {
+                roomMap.remove(opponentName);
+                room.endGame();
+            }
+        } else {
+            opponentMap.remove(player.getUsername());
+            Room room = roomMap.remove(player.getUsername());
+            if (room != null) {
+                room.endGame();
+            }
+        }
+    }
+
+    private void handleSubmitArray(ObjectSentReceived message) {
+        try {
+            Room room = roomMap.get(player.getUsername());
+            if (room == null) {
+                System.out.println("[ClientHandler] Không tìm thấy phòng cho " + player.getUsername());
+                return;
+            }
+
+            @SuppressWarnings("unchecked")
+            ArrayList<Integer> submission = (ArrayList<Integer>) message.getObj();
+            ScoreUpdate update = room.handleSubmission(player.getUsername(), submission);
+            if (update == null) {
+                System.out.println("[ClientHandler] Không thể xử lý bài nộp cho " + player.getUsername());
+                return;
+            }
+
+            networkManager.send(new ObjectSentReceived("update_score", update));
+
+            String opponentName = opponentMap.get(player.getUsername());
+            if (opponentName != null) {
+                NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+                if (opponentNM != null) {
+                    opponentNM.send(new ObjectSentReceived("update_score", update));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
     
@@ -236,6 +308,37 @@ public class ClientHandler implements Runnable{
         onlinePlayers.remove(player.getUsername());
         onlinePlayersNetwork.remove(player.getUsername());
         System.out.println("🟥 Player disconnected: " + player.getUsername());
+        player.setBusy(false);
+
+        String opponentName = opponentMap.remove(player.getUsername());
+        if (opponentName != null) {
+            opponentMap.remove(opponentName);
+
+            NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+            if (opponentNM != null) {
+                try {
+                    opponentNM.send(new ObjectSentReceived("doi thu thoat", null));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Player opponent = onlinePlayers.get(opponentName);
+            if (opponent != null) {
+                opponent.setBusy(false);
+            }
+
+            Room room = roomMap.remove(player.getUsername());
+            if (room != null) {
+                roomMap.remove(opponentName);
+                room.endGame();
+            }
+        } else {
+            Room room = roomMap.remove(player.getUsername());
+            if (room != null) {
+                room.endGame();
+            }
+        }
     }
 
     

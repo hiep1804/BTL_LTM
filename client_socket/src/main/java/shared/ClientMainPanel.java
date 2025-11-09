@@ -133,6 +133,22 @@ public class ClientMainPanel extends JPanel {
                                     ArrayList<Player> leaderboard = (ArrayList<Player>) finalReceived.getObj();
                                     leaderboardPanel.updateLeaderboard(leaderboard);
                                 }
+                                case "refreshPlayerInfo" -> {
+                                    Player updatedPlayer = (Player) finalReceived.getObj();
+                                    // Cập nhật thông tin player hiện tại
+                                    p.setTotalScore(updatedPlayer.getTotalScore());
+                                    p.setTotalWins(updatedPlayer.getTotalWins());
+                                    p.setMatchesPlayed(updatedPlayer.getMatchesPlayed());
+                                    System.out.println("[ClientMainPanel] Đã cập nhật thông tin player: " + 
+                                                     p.getUsername() + " - Score: " + p.getTotalScore());
+                                    
+                                    // Reload leaderboard
+                                    try {
+                                        networkManager.send(new ObjectSentReceived("getLeaderboard", null));
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
                                 case "want to challenge" -> {
                                     Player challenger = (Player) finalReceived.getObj();
                                     int choice = JOptionPane.showConfirmDialog(
@@ -153,11 +169,26 @@ public class ClientMainPanel extends JPanel {
                                     clientMainFrm.setStartGameRoom(opponent, networkManager);
                                     clientMainFrm.showStartGameRoom();
                                 }
-                                case "mang can sap xep" -> {
-                                    // Chuyển tiếp mảng cho StartGameRoomPanel
-                                    System.out.println("[ClientMainPanel] Nhận được mảng, chuyển tiếp cho StartGameRoomPanel");
-                                    ArrayList<Integer> arr = (ArrayList<Integer>) finalReceived.getObj();
-                                    clientMainFrm.forwardArrayToGameRoom(arr);
+                                case "start_round" -> {
+                                    // Chuyển tiếp thông tin ván đấu cho StartGameRoomPanel
+                                    System.out.println("[ClientMainPanel] Nhận thông tin ván đấu mới");
+                                    RoundInfo roundInfo = (RoundInfo) finalReceived.getObj();
+                                    clientMainFrm.forwardRoundInfo(roundInfo);
+                                }
+                                case "round_end" -> {
+                                    System.out.println("[ClientMainPanel] Kết thúc ván");
+                                    ScoreUpdate update = (ScoreUpdate) finalReceived.getObj();
+                                    clientMainFrm.forwardRoundEnd(update);
+                                }
+                                case "game_over" -> {
+                                    System.out.println("[ClientMainPanel] Kết thúc trận đấu");
+                                    ScoreUpdate finalScore = (ScoreUpdate) finalReceived.getObj();
+                                    clientMainFrm.forwardGameOver(finalScore);
+                                }
+                                case "update_score" -> {
+                                    System.out.println("[ClientMainPanel] Nhận cập nhật điểm");
+                                    ScoreUpdate update = (ScoreUpdate) finalReceived.getObj();
+                                    clientMainFrm.forwardScoreUpdate(update);
                                 }
                                 case "doi thu thoat" -> {
                                     // Thông báo cho StartGameRoomPanel

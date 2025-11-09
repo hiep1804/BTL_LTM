@@ -55,4 +55,36 @@ public class PlayerService {
         }
         return null;
     }
+    
+    /**
+     * Cập nhật thống kê sau trận đấu
+     * @param username Tên người chơi
+     * @param won true nếu thắng, false nếu hòa hoặc thua
+     * @param draw true nếu hòa
+     * @return true nếu cập nhật thành công
+     */
+    public boolean updateMatchStats(String username, boolean won, boolean draw) {
+        String sql = "UPDATE players SET matches_played = matches_played + 1, " +
+                     "total_wins = total_wins + ?, " +
+                     "total_score = total_score + ? " +
+                     "WHERE username = ?";
+        
+        try (Connection conn = DBConnection.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            int winsToAdd = won ? 1 : 0;
+            int scoreToAdd = won ? 10 : (draw ? 5 : 0);
+            
+            stmt.setInt(1, winsToAdd);
+            stmt.setInt(2, scoreToAdd);
+            stmt.setString(3, username);
+            
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
