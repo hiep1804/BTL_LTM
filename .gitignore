@@ -15,7 +15,7 @@
 
 # Log files
 *.log
-server_socket/src/connection/
+# server_socket/src/connection/
 
 # OS generated files
 .DS_Store
