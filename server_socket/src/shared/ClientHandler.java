@@ -180,7 +180,16 @@ public class ClientHandler implements Runnable{
     private void handleAccept(ObjectSentReceived req) throws Exception {
         String challengerName = (String) req.getObj();
         Player challenger = onlinePlayers.get(challengerName);
-        NetworkManager challengerNM = onlinePlayersNetwork.get(challengerName);     //dang null
+        NetworkManager challengerNM = onlinePlayersNetwork.get(challengerName);  
+        
+        //Kiểm tra xem thằng challenger có bận hay không? Bận thì hiện lên thông báo đối thủ đã vào trận. 
+        //Sau khi thoát ra, nhớ broadcast - cập nhật mảng onlinePlayerList
+        if(challenger.isBusy()) {
+            networkManager.send(new ObjectSentReceived("challenger_busy", "Người thách đấu đã vào trận với người khác."));
+            broadcastFullPlayerList();  //gửi yêu cầu cập nhật danh sách onlinePlayer
+            
+            return;
+        }
         
         if(challenger != null) {
             // Đánh dấu cả 2 đang bận

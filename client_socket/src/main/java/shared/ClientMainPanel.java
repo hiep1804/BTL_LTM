@@ -133,6 +133,10 @@ public class ClientMainPanel extends JPanel {
                                     ArrayList<Player> leaderboard = (ArrayList<Player>) finalReceived.getObj();
                                     leaderboardPanel.updateLeaderboard(leaderboard);
                                 }
+                                case "challenger_busy" -> {
+                                    String message = (String) finalReceived.getObj();
+                                    JOptionPane.showMessageDialog(ClientMainPanel.this, message, "Thách đấu thất bại", JOptionPane.WARNING_MESSAGE);
+                                }
                                 case "refreshPlayerInfo" -> {
                                     Player updatedPlayer = (Player) finalReceived.getObj();
                                     // Cập nhật thông tin player hiện tại
