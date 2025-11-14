@@ -300,13 +300,56 @@ public class ClientMainPanel extends JPanel {
             });
 
             row.add(nameLabel, BorderLayout.CENTER);
-            row.add(actionBtn, BorderLayout.EAST);
+//            row.add(actionBtn, BorderLayout.EAST);
+            //Kiểm tra player có đang bận không --> Bận: báo bận - Không bận: có nút Thách đấu
+            if (player.isBusy()) {
+                // 3. Nếu ĐANG BẬN: Hiển thị Label "Đang bận"
+                JLabel busyLabel = new JLabel("Đang bận");
+                busyLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+                busyLabel.setForeground(Color.GRAY);
+                busyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                // Đặt kích thước ưu tiên để giữ layout (giống kích thước nút)
+                busyLabel.setPreferredSize(new Dimension(110, 35)); 
+                
+                row.add(busyLabel, BorderLayout.EAST); // Thêm label vào bên phải
+            } else {
+                //Giữ nguyên logic
+                row.add(actionBtn, BorderLayout.EAST);
+                listPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+            }
 
             listPanel.add(row);
-            listPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+//            listPanel.add(Box.createRigidArea(new Dimension(0, 8)));
         }
 
         listPanel.revalidate();
         listPanel.repaint();
+    }
+    
+    /**
+    * Trả về bản đồ (HashMap) chứa danh sách người chơi trực tuyến.
+    *
+    * @return HashMap<String, Player> danh sách người chơi.
+    */
+    public HashMap<String, Player> getPlayers() {
+        return this.players;
+    }
+    
+    /**
+    * Thiết lập (ghi đè) danh sách người chơi trực tuyến và tự động làm mới giao diện.
+    * <p>
+    * Phương thức này đảm bảo việc gán dữ liệu và cập nhật UI
+    * được thực hiện an toàn trên Event Dispatch Thread (EDT) của Swing.
+    *
+    * @param newPlayers Danh sách người chơi mới.
+    * --> Hàm này giúp: khi khởi tạo 1 ClientMainPanel mới, nó sẽ lấy lại được danh sách người chơi online
+    * từ ClientMainPanel cũ.
+    */
+    public void setPlayers(HashMap<String, Player> newPlayers) {
+        // Đảm bảo việc gán và làm mới UI được thực hiện trên luồng EDT
+        SwingUtilities.invokeLater(() -> {
+            this.players = newPlayers;
+            refreshList(); // Tự động làm mới danh sách trên UI
+        });
     }
 }

@@ -2,6 +2,7 @@ package shared;
 
 import java.awt.CardLayout;
 import java.io.IOException;
+import java.util.HashMap;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -29,7 +30,7 @@ public class ClientMainFrm extends JFrame{
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("192.168.1.96", 59);
+            networkManager.connect("192.168.0.104", 59);
         }
         catch(Exception e){
             e.printStackTrace();
@@ -155,6 +156,7 @@ public class ClientMainFrm extends JFrame{
     public void reloadClientMainPanel() {
         try {
             // Xóa ClientMainPanel cũ nếu có
+            HashMap<String, Player> oldOnlinePlayers = this.clientMainPanel.getPlayers();
             if (clientMainPanel != null) {
                 clientMainPanel.stopListening(); // Dừng listener cũ
                 cardPanel.remove(clientMainPanel);
@@ -163,6 +165,7 @@ public class ClientMainFrm extends JFrame{
             
             // Tạo mới ClientMainPanel
             clientMainPanel = new ClientMainPanel(player, this, networkManager);
+            clientMainPanel.setPlayers(oldOnlinePlayers);
             cardPanel.add(clientMainPanel, CLIENT_MAIN_VIEW);
             
             // Hiển thị ClientMainPanel

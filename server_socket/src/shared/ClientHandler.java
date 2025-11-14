@@ -187,6 +187,9 @@ public class ClientHandler implements Runnable{
             player.setBusy(true);
             challenger.setBusy(true);
             
+            //Gửi thông báo cập nhật list cho TẤT CẢ mọi người
+            broadcastFullPlayerList();
+            
             // Lưu thông tin đối thủ vào map (2 chiều)
             opponentMap.put(player.getUsername(), challengerName);
             opponentMap.put(challengerName, player.getUsername());
@@ -253,6 +256,9 @@ public class ClientHandler implements Runnable{
                 room.endGame();
             }
         }
+        
+        // Gửi thông báo cập nhật list cho TẤT CẢ mọi người
+        broadcastFullPlayerList();
     }
 
     private void handleSubmitArray(ObjectSentReceived message) {
@@ -303,11 +309,32 @@ public class ClientHandler implements Runnable{
         onlinePlayersNetwork.put(p.getUsername(), networkManager);
     }
     
+    /**
+     * Gửi (broadcast) toàn bộ danh sách người chơi online 
+     * (với trạng thái busy/free) đến TẤT CẢ các client đang kết nối.
+     * sử dụng tín hiệu "loadPlayerOnline"
+     */
+    private void broadcastFullPlayerList() {
+        try {
+            System.out.println("[Server] Broadcasting updated playerList to all clients...");
+            
+            // Tạo 1 gói tin CHUNG chứa TOÀN BỘ danh sách onlinePlayers HIỆN TẠI
+            ObjectSentReceived msg = new ObjectSentReceived("loadPlayerOnline", onlinePlayers);
+            
+            // Gửi gói tin này cho TẤT CẢ network managers đang online
+            for (NetworkManager nm : onlinePlayersNetwork.values()) {
+                nm.send(msg);
+            }
+        } catch (Exception e) {
+            System.out.println("Error broadcasting full playerList: " + e.getMessage());
+        }
+    }
+    
     private void handleDisconnect() {
         if (player == null) return;
         onlinePlayers.remove(player.getUsername());
         onlinePlayersNetwork.remove(player.getUsername());
-        System.out.println("🟥 Player disconnected: " + player.getUsername());
+        System.out.println("Player disconnected: " + player.getUsername());
         player.setBusy(false);
 
         String opponentName = opponentMap.remove(player.getUsername());
@@ -339,26 +366,8 @@ public class ClientHandler implements Runnable{
                 room.endGame();
             }
         }
-    }
-
-    
-    private void removeFromList() {
-        // Code cũ bị comment — giữ nguyên logic, không gửi lại danh sách.
-        // Bạn có thể bật lại nếu muốn cập nhật danh sách sau khi player rời đi.
-        /*
-        for (Player player : onlinePlayers.values()) {
-            HashMap<String, Player> mp = new HashMap<>();
-            for (String key : onlinePlayers.keySet()) {
-                mp.put(key, onlinePlayers.get(key));
-            }
-            ObjectSentReceived objectSentReceived = new ObjectSentReceived("loadPlayerOnline", mp);
-            try {
-                player.getObjOut().writeObject(objectSentReceived);
-                player.getObjOut().flush();
-            } catch (IOException ex) {
-                Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        */
+        
+        // Gửi thông báo cập nhật list (đã xóa player) cho TẤT CẢ mọi người
+        broadcastFullPlayerList();
     }
 }
