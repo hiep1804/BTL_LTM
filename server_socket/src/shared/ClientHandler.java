@@ -214,7 +214,24 @@ public class ClientHandler implements Runnable{
             Room room = new Room(challenger, player, challengerNM, networkManager);
             roomMap.put(player.getUsername(), room);
             roomMap.put(challengerName, room);
-            new Thread(room).start();
+            
+            // Tạo thread cho Room và theo dõi khi kết thúc
+            Thread roomThread = new Thread(() -> {
+                room.run();
+                
+                // Sau khi Room kết thúc, broadcast lại danh sách để cập nhật trạng thái
+                System.out.println("[ClientHandler] Room kết thúc, broadcasting player list...");
+                broadcastFullPlayerList();
+                
+                // Xóa room khỏi map
+                roomMap.remove(player.getUsername());
+                roomMap.remove(challengerName);
+                
+                // Xóa opponent mapping
+                opponentMap.remove(player.getUsername());
+                opponentMap.remove(challengerName);
+            });
+            roomThread.start();
         }
     }
     

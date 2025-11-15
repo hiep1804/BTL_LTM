@@ -143,6 +143,11 @@ class Room implements Runnable {
         
         // Cập nhật database
         updatePlayerStats();
+        
+        // Reset trạng thái busy để người khác có thể thách đấu
+        p1.setBusy(false);
+        p2.setBusy(false);
+        System.out.println("[Room] Đã reset trạng thái busy cho cả 2 người chơi");
     }
     
     private void updatePlayerStats() {

@@ -15,7 +15,7 @@ import java.sql.SQLException;
 public class DBConnection {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/sort_game";
     private static final String USER = "root";    
-    private static final String PASS = "1234"; 
+    private static final String PASS = "12345"; 
     
     public static Connection connect() throws ClassNotFoundException {
         Connection connection = null;
