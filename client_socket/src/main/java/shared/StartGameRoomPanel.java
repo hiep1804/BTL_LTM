@@ -277,12 +277,6 @@ public class StartGameRoomPanel extends JPanel{
             public void mousePressed(MouseEvent e) {
                 for (Rect r : movableRects) {
                     if (r.getBounds().contains(e.getPoint())) {
-                        // Clear any previous assignment of this value on the target row
-                        for (Rect s : staticRects) {
-                            if (r.getValue().equals(s.getValue())) {
-                                s.setValue("");
-                            }
-                        }
                         dragging = r;
                         offsetX = e.getX() - r.getX();
                         offsetY = e.getY() - r.getY();
@@ -293,8 +287,19 @@ public class StartGameRoomPanel extends JPanel{
             public void mouseReleased(MouseEvent e) {
                 if (dragging != null) {
                     boolean snapped = false;
+                    Rect previousSlot = null;
+                    
+                    // Tìm vị trí cũ của quả bóng đang kéo (nếu có)
+                    for (Rect s : staticRects) {
+                        if (s.getValue().equals(dragging.getValue()) &&
+                            Math.abs(s.getX() - dragging.getOriginalX()) < 10 &&
+                            Math.abs(s.getY() - dragging.getOriginalY()) < 130) {
+                            previousSlot = s;
+                            break;
+                        }
+                    }
 
-                    // Kiểm tra gần rect đứng im
+                    // Kiểm tra gần rect đứng im nào
                     for (Rect s : staticRects) {
                         double dist = Point.distance(
                                 dragging.getX() + dragging.getW()/2, 
@@ -303,6 +308,11 @@ public class StartGameRoomPanel extends JPanel{
                                 s.getY() + s.getH()/2
                         );
                         if (dist < 50) {
+                            // Xóa giá trị ở vị trí cũ (nếu có)
+                            if (previousSlot != null && previousSlot != s) {
+                                previousSlot.setValue("");
+                            }
+                            
                             // Snap vị trí
                             dragging.setX(s.getX());
                             dragging.setY(s.getY());
@@ -315,9 +325,14 @@ public class StartGameRoomPanel extends JPanel{
                     }
 
                     if (!snapped) {
-                        // Trả về vị trí cũ
+                        // Nếu không snap vào vị trí nào, trả về vị trí cũ
                         dragging.setX(dragging.getOriginalX());
                         dragging.setY(dragging.getOriginalY());
+                        
+                        // Xóa giá trị ở vị trí đã đặt trước đó (nếu có)
+                        if (previousSlot != null) {
+                            previousSlot.setValue("");
+                        }
                     }
 
                     dragging = null;
