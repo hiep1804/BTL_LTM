@@ -20,17 +20,19 @@ public class ClientMainFrm extends JFrame{
     private JPanel registerPanel;
     private ClientMainPanel clientMainPanel;
     private StartGameRoomPanel startGameRoomPanel;
+    private MatchResultPanel matchResultPanel;
 
     public static final String LOGIN_VIEW = "login_view";
     public static final String REGISTER_VIEW = "register_view";
     public static final String CLIENT_MAIN_VIEW = "client_main_view";
     public static final String GAME_ROOM_VIEW = "game_room_view";
+    public static final String MATCH_RESULT_VIEW = "match_result_view";
     
     
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("192.168.1.115", 59);
+            networkManager.connect("192.168.1.7", 59);
         }
         catch(Exception e){
             e.printStackTrace();
@@ -150,6 +152,48 @@ public class ClientMainFrm extends JFrame{
             startGameRoomPanel = null;
             System.out.println("[ClientMainFrm] Đã xóa StartGameRoomPanel");
         }
+    }
+    
+    // Xóa match result panel
+    public void removeMatchResultPanel() {
+        if (matchResultPanel != null) {
+            cardPanel.remove(matchResultPanel);
+            matchResultPanel = null;
+            System.out.println("[ClientMainFrm] Đã xóa MatchResultPanel");
+        }
+    }
+    
+    // Hiển thị màn hình kết quả trận đấu
+    public void showMatchResult(Player winner, Player loser, int winnerScore, int loserScore) {
+        matchResultPanel = new MatchResultPanel(winner, loser, winnerScore, loserScore);
+        cardPanel.add(matchResultPanel, MATCH_RESULT_VIEW);
+        
+        // Xử lý sự kiện nút "Rematch"
+        matchResultPanel.setRematchAction(e -> {
+            JOptionPane.showMessageDialog(this, "Tính năng rematch đang được phát triển!");
+        });
+
+        // Xử lý sự kiện nút "Quay về trang chủ"
+        matchResultPanel.setBackToHomeAction(e -> {
+            // Đánh dấu người chơi không còn bận
+            player.setBusy(false);
+            
+            // Yêu cầu refresh thông tin từ server
+            try {
+                networkManager.send(new ObjectSentReceived("refreshPlayerInfo", null));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            
+            // Xóa các panel game
+            removeGameRoomPanel();
+            removeMatchResultPanel();
+            
+            // Quay về ClientMainPanel (không reload, chỉ show lại)
+            cardLayout.show(cardPanel, CLIENT_MAIN_VIEW);
+        });
+
+        cardLayout.show(cardPanel, MATCH_RESULT_VIEW);
     }
     
     // Reload ClientMainPanel (quay về lobby và refresh)

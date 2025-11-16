@@ -27,6 +27,7 @@ import javax.swing.SwingConstants;
  */
 public class StartGameRoomPanel extends JPanel{
     private Player p1;
+    private Player p2;
     private ClientMainFrm clientMainFrm;
     ArrayList<Rect> staticRects = new ArrayList<>();
     ArrayList<Rect> movableRects = new ArrayList<>();
@@ -51,6 +52,7 @@ public class StartGameRoomPanel extends JPanel{
         this.clientMainFrm=clientMainFrm;
         this.networkManager=networkManager;
         this.p1=p1;
+        this.p2=p2;
         setLayout(null);
         
         // Tiêu đề game với font đẹp
@@ -168,8 +170,8 @@ public class StartGameRoomPanel extends JPanel{
             // Xóa panel game room cũ
             clientMainFrm.removeGameRoomPanel();
             
-            // Reload ClientMainPanel để hiển thị dữ liệu mới
-            clientMainFrm.reloadClientMainPanel();
+            // Quay về ClientMainPanel (không reload, chỉ show)
+            clientMainFrm.showClientGamePanel();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -482,6 +484,9 @@ public class StartGameRoomPanel extends JPanel{
         boolean playerIsFirst = username.equals(finalScore.getPlayer1Username());
         
         int yourScore, oppScore;
+        Player winner, loser;
+        int winnerScore, loserScore;
+        
         if (playerIsFirst) {
             yourScore = finalScore.getPlayer1Score();
             oppScore = finalScore.getPlayer2Score();
@@ -493,25 +498,27 @@ public class StartGameRoomPanel extends JPanel{
         yourScoreLabel.setText("Điểm: " + yourScore);
         oppScoreLabel.setText("Điểm: " + oppScore);
         
-        // Hiển thị kết quả
-        String result;
+        // Xác định người thắng/thua
         if (yourScore > oppScore) {
-            result = "BẠN THẮNG!\n\nTỉ số: " + yourScore + " - " + oppScore;
+            winner = p1;
+            loser = p2;
+            winnerScore = yourScore;
+            loserScore = oppScore;
         } else if (yourScore < oppScore) {
-            result = "BẠN THUA!\n\nTỉ số: " + yourScore + " - " + oppScore;
+            winner = p2;
+            loser = p1;
+            winnerScore = oppScore;
+            loserScore = yourScore;
         } else {
-            result = "BẠN HÒA!\n\nTỉ số: " + yourScore + " - " + oppScore;
+            // Hòa - vẫn truyền vào nhưng MatchResultPanel sẽ xử lý
+            winner = p1;
+            loser = p2;
+            winnerScore = yourScore;
+            loserScore = oppScore;
         }
         
-        javax.swing.JOptionPane.showMessageDialog(
-            this,
-            result,
-            "KẾT THÚC TRẬN ĐẤU",
-            javax.swing.JOptionPane.INFORMATION_MESSAGE
-        );
-        
-        // Quay về lobby
-        backToLobby();
+        // Hiển thị MatchResultPanel
+        clientMainFrm.showMatchResult(winner, loser, winnerScore, loserScore);
     }
 
     @Override

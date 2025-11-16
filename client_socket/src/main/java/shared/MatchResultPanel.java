@@ -47,24 +47,29 @@ public class MatchResultPanel extends JPanel {
         };
         panel.setOpaque(false);
 
-        JLabel titleLabel = new JLabel("KẾT QUẢ TRẬN ĐẤU", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("", SwingConstants.CENTER);
+        if (winnerScore == loserScore) {
+            titleLabel.setText("TRẬN ĐẤU HÒA");
+        } else {
+            titleLabel.setText("KẾT QUẢ TRẬN ĐẤU");
+        }
         titleLabel.setBounds(30, 30, 440, 40);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 26));
         titleLabel.setForeground(Color.WHITE);
         panel.add(titleLabel);
 
-        JPanel winnerPanel = createPlayerResultPanel("WIN", winner, winnerScore, true);
+        JPanel winnerPanel = createPlayerResultPanel("WIN", winner, winnerScore, true, winnerScore == loserScore);
         winnerPanel.setBounds(50, 110, 190, 250);
         panel.add(winnerPanel);
 
-        JPanel loserPanel = createPlayerResultPanel("LOSE", loser, loserScore, false);
+        JPanel loserPanel = createPlayerResultPanel("LOSE", loser, loserScore, false, winnerScore == loserScore);
         loserPanel.setBounds(260, 110, 190, 250);
         panel.add(loserPanel);
 
         return panel;
     }
 
-    private JPanel createPlayerResultPanel(String label, Player player, int score, boolean isWinner) {
+    private JPanel createPlayerResultPanel(String label, Player player, int score, boolean isWinner, boolean isDraw) {
         JPanel panel = new JPanel(null) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -72,8 +77,15 @@ public class MatchResultPanel extends JPanel {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                Color start = isWinner ? new Color(76, 175, 80) : new Color(244, 67, 54);
-                Color end = isWinner ? new Color(56, 142, 60) : new Color(211, 47, 47);
+                Color start, end;
+                if (isDraw) {
+                    start = new Color(158, 158, 158); // Gray for draw
+                    end = new Color(117, 117, 117);
+                } else {
+                    start = isWinner ? new Color(76, 175, 80) : new Color(244, 67, 54);
+                    end = isWinner ? new Color(56, 142, 60) : new Color(211, 47, 47);
+                }
+                
                 GradientPaint gradient = new GradientPaint(0, 0, start, 0, getHeight(), end);
                 g2d.setPaint(gradient);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
@@ -86,7 +98,8 @@ public class MatchResultPanel extends JPanel {
         };
         panel.setOpaque(false);
 
-        JLabel resultLabel = new JLabel(label, SwingConstants.CENTER);
+        String resultText = isDraw ? "DRAW" : label;
+        JLabel resultLabel = new JLabel(resultText, SwingConstants.CENTER);
         resultLabel.setBounds(20, 15, 150, 30);
         resultLabel.setFont(new Font("Arial", Font.BOLD, 24));
         resultLabel.setForeground(Color.WHITE);
