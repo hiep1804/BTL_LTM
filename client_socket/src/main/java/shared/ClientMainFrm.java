@@ -170,13 +170,27 @@ public class ClientMainFrm extends JFrame{
         
         // Xử lý sự kiện nút "Rematch"
         matchResultPanel.setRematchAction(e -> {
-            JOptionPane.showMessageDialog(this, "Tính năng rematch đang được phát triển!");
+            try {
+                // Gửi yêu cầu rematch lên server
+                networkManager.send(new ObjectSentReceived("request_rematch", null));
+                JOptionPane.showMessageDialog(this, "Đã gửi yêu cầu tái đấu đến đối thủ!");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Không thể gửi yêu cầu rematch!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         // Xử lý sự kiện nút "Quay về trang chủ"
         matchResultPanel.setBackToHomeAction(e -> {
             // Đánh dấu người chơi không còn bận
             player.setBusy(false);
+            
+            // Gửi thông báo quay về lobby để server xóa opponent mapping
+            try {
+                networkManager.send(new ObjectSentReceived("back_to_lobby", null));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
             
             // Yêu cầu refresh thông tin từ server
             try {

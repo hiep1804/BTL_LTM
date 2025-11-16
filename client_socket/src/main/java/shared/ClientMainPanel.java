@@ -203,6 +203,29 @@ public class ClientMainPanel extends JPanel {
                                     // Người chơi này đã thoát, không cần làm gì
                                     System.out.println("[ClientMainPanel] Xác nhận đã thoát game");
                                 }
+                                case "want_rematch" -> {
+                                    Player opponent = (Player) finalReceived.getObj();
+                                    int choice = JOptionPane.showConfirmDialog(
+                                        ClientMainPanel.this,
+                                        "Người chơi " + opponent.getUsername() + " muốn tái đấu. Bạn có đồng ý không?",
+                                        "Yêu cầu tái đấu",
+                                        JOptionPane.YES_NO_OPTION,
+                                        JOptionPane.QUESTION_MESSAGE
+                                    );
+                                    if (choice == JOptionPane.YES_OPTION) {
+                                        networkManager.send(new ObjectSentReceived("accept_rematch", opponent.getUsername()));
+                                    } else {
+                                        networkManager.send(new ObjectSentReceived("reject_rematch", opponent.getUsername()));
+                                    }
+                                }
+                                case "rematch_rejected" -> {
+                                    JOptionPane.showMessageDialog(
+                                        ClientMainPanel.this,
+                                        "Đối thủ đã từ chối yêu cầu tái đấu của bạn.",
+                                        "Tái đấu bị từ chối",
+                                        JOptionPane.INFORMATION_MESSAGE
+                                    );
+                                }
                             }
                         } catch (Exception ex) {
                             Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);

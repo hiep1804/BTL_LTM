@@ -81,7 +81,7 @@ public class StartGameRoomPanel extends JPanel{
         yourName.setFont(new Font("Arial", Font.PLAIN, 14));
         playerPanel.add(yourName);
         
-    yourScoreLabel = new JLabel("Điểm: 0");
+    yourScoreLabel = new JLabel("Điểm: 50");
     yourScoreLabel.setBounds(10, 70, 160, 25);
     yourScoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
     yourScoreLabel.setForeground(new Color(76, 175, 80));
@@ -107,7 +107,7 @@ public class StartGameRoomPanel extends JPanel{
         oppName.setFont(new Font("Arial", Font.PLAIN, 14));
         opponentPanel.add(oppName);
         
-    oppScoreLabel = new JLabel("Điểm: 0");
+    oppScoreLabel = new JLabel("Điểm: 50");
     oppScoreLabel.setBounds(10, 70, 160, 25);
     oppScoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
     oppScoreLabel.setForeground(new Color(255, 87, 34));
@@ -210,6 +210,12 @@ public class StartGameRoomPanel extends JPanel{
                 timerLabel.setText("00:00");
                 timerLabel.setForeground(Color.RED);
                 countdownTimer.stop();
+                
+                // Tự động gửi bài hiện tại khi hết giờ
+                if (!hasSubmitted) {
+                    System.out.println("[StartGameRoomPanel] Hết giờ - Tự động gửi bài hiện tại");
+                    autoSubmitAnswer();
+                }
             } else {
                 int seconds = (int)(remaining / 1000);
                 int millis = (int)((remaining % 1000) / 100);
@@ -417,6 +423,43 @@ public class StartGameRoomPanel extends JPanel{
             );
         }
     }
+    
+    // Tự động gửi kết quả khi hết giờ
+    private void autoSubmitAnswer() {
+        if (hasSubmitted) {
+            return;
+        }
+        
+        ArrayList<Integer> submission = new ArrayList<>();
+        
+        // Lấy kết quả hiện tại (có thể chưa đủ hoặc chưa đúng)
+        for (Rect s : staticRects) {
+            String value = s.getValue();
+            if (value != null && !value.isEmpty()) {
+                try {
+                    submission.add(Integer.parseInt(value));
+                } catch (NumberFormatException ex) {
+                    submission.add(0); // Giá trị không hợp lệ -> gán 0
+                }
+            } else {
+                submission.add(0); // Ô trống -> gán 0
+            }
+        }
+        
+        // Đảm bảo đủ 8 phần tử
+        while (submission.size() < 8) {
+            submission.add(0);
+        }
+
+        try {
+            hasSubmitted = true;
+            submitButton.setEnabled(false);
+            networkManager.send(new ObjectSentReceived("submit_array", submission));
+            System.out.println("[StartGameRoomPanel] Hết giờ - Tự động gửi bài nộp: " + submission);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public void updateScores(ScoreUpdate update) {
         if (update == null) {
@@ -426,14 +469,20 @@ public class StartGameRoomPanel extends JPanel{
         String username = p1.getUsername();
         boolean playerIsFirst = username.equals(update.getPlayer1Username());
 
+        // Cập nhật điểm ngay lập tức
+        int yourScore, oppScore;
         if (playerIsFirst) {
-            yourScoreLabel.setText("Điểm: " + update.getPlayer1Score());
-            oppScoreLabel.setText("Điểm: " + update.getPlayer2Score());
+            yourScore = update.getPlayer1Score();
+            oppScore = update.getPlayer2Score();
         } else {
-            yourScoreLabel.setText("Điểm: " + update.getPlayer2Score());
-            oppScoreLabel.setText("Điểm: " + update.getPlayer1Score());
+            yourScore = update.getPlayer2Score();
+            oppScore = update.getPlayer1Score();
         }
+        
+        yourScoreLabel.setText("Điểm: " + yourScore);
+        oppScoreLabel.setText("Điểm: " + oppScore);
 
+        // Chỉ hiển thị thông báo cho người vừa nộp bài
         if (username.equals(update.getSubmitterUsername())) {
             if (update.isCorrect()) {
                 javax.swing.JOptionPane.showMessageDialog(
@@ -445,12 +494,14 @@ public class StartGameRoomPanel extends JPanel{
             } else {
                 javax.swing.JOptionPane.showMessageDialog(
                     this,
-                    "Kết quả chưa đúng, hãy thử lại nhé.",
+                    "Kết quả chưa đúng, bạn đã bị trừ điểm.",
                     "Chưa chính xác",
                     javax.swing.JOptionPane.WARNING_MESSAGE
                 );
             }
         }
+        
+        System.out.println("[StartGameRoomPanel] Cập nhật điểm - Bạn: " + yourScore + ", Đối thủ: " + oppScore);
     }
     
     public void handleRoundEnd(ScoreUpdate update) {

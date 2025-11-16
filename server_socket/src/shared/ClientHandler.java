@@ -79,6 +79,10 @@ public class ClientHandler implements Runnable{
                     case "reject" -> handleReject(message);
                     case "thoat game" -> handleExitGame(message);
                     case "submit_array" -> handleSubmitArray(message);
+                    case "request_rematch" -> handleRequestRematch(message);
+                    case "accept_rematch" -> handleAcceptRematch(message);
+                    case "reject_rematch" -> handleRejectRematch(message);
+                    case "back_to_lobby" -> handleBackToLobby(message);
                     default -> System.out.println("Unknown message type: " + msgType);
                 }
             }
@@ -227,9 +231,11 @@ public class ClientHandler implements Runnable{
                 roomMap.remove(player.getUsername());
                 roomMap.remove(challengerName);
                 
-                // Xóa opponent mapping
-                opponentMap.remove(player.getUsername());
-                opponentMap.remove(challengerName);
+                // KHÔNG xóa opponentMap ở đây để cho phép rematch
+                // opponentMap sẽ được xóa khi:
+                // - Người chơi quay về lobby (handleExitGame hoặc nút "Quay về trang chủ")
+                // - Rematch được chấp nhận (sẽ update lại opponentMap với cùng 2 người)
+                System.out.println("[ClientHandler] Giữ lại opponent mapping để cho phép rematch");
             });
             roomThread.start();
         }
@@ -244,6 +250,100 @@ public class ClientHandler implements Runnable{
             ObjectSentReceived msg = new ObjectSentReceived("reject challenge", player);
             opponentNM.send(msg);
         }
+    }
+    
+    private void handleRequestRematch(ObjectSentReceived req) throws Exception {
+        // Lấy thông tin đối thủ từ opponentMap
+        String opponentName = opponentMap.get(player.getUsername());
+        if (opponentName == null) {
+            networkManager.send(new ObjectSentReceived("rematch_error", "Không tìm thấy đối thủ."));
+            return;
+        }
+        
+        Player opponent = onlinePlayers.get(opponentName);
+        NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+        
+        if (opponent != null && opponentNM != null) {
+            // Gửi yêu cầu rematch cho đối thủ
+            ObjectSentReceived msg = new ObjectSentReceived("want_rematch", player);
+            opponentNM.send(msg);
+            System.out.println("[ClientHandler] " + player.getUsername() + " yêu cầu rematch với " + opponentName);
+        }
+    }
+    
+    private void handleAcceptRematch(ObjectSentReceived req) throws Exception {
+        String opponentName = (String) req.getObj();
+        Player opponent = onlinePlayers.get(opponentName);
+        NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+        
+        if (opponent == null || opponentNM == null) {
+            networkManager.send(new ObjectSentReceived("rematch_error", "Đối thủ không còn trực tuyến."));
+            return;
+        }
+        
+        // Đánh dấu cả 2 đang bận
+        player.setBusy(true);
+        opponent.setBusy(true);
+        
+        // Broadcast cập nhật danh sách
+        broadcastFullPlayerList();
+        
+        // Cập nhật opponent map
+        opponentMap.put(player.getUsername(), opponentName);
+        opponentMap.put(opponentName, player.getUsername());
+        
+        // Gửi thông báo start_game cho cả 2
+        ObjectSentReceived msgToOpponent = new ObjectSentReceived("start_game", player);
+        opponentNM.send(msgToOpponent);
+        
+        ObjectSentReceived msgToPlayer = new ObjectSentReceived("start_game", opponent);
+        networkManager.send(msgToPlayer);
+        
+        // Tạo Room mới
+        Room room = new Room(opponent, player, opponentNM, networkManager);
+        roomMap.put(player.getUsername(), room);
+        roomMap.put(opponentName, room);
+        
+        // Chạy Room trong thread riêng
+        Thread roomThread = new Thread(() -> {
+            room.run();
+            
+            System.out.println("[ClientHandler] Rematch room kết thúc, broadcasting player list...");
+            broadcastFullPlayerList();
+            
+            // Cleanup - chỉ xóa room, giữ lại opponentMap để có thể rematch tiếp
+            roomMap.remove(player.getUsername());
+            roomMap.remove(opponentName);
+            // Không xóa opponentMap để cho phép rematch nhiều lần
+        });
+        roomThread.start();
+        
+        System.out.println("[ClientHandler] Rematch started: " + opponentName + " vs " + player.getUsername());
+    }
+    
+    private void handleRejectRematch(ObjectSentReceived req) throws Exception {
+        String opponentName = (String) req.getObj();
+        NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+        
+        if (opponentNM != null) {
+            ObjectSentReceived msg = new ObjectSentReceived("rematch_rejected", null);
+            opponentNM.send(msg);
+            System.out.println("[ClientHandler] " + player.getUsername() + " từ chối rematch với " + opponentName);
+        }
+    }
+    
+    private void handleBackToLobby(ObjectSentReceived req) throws Exception {
+        System.out.println("[ClientHandler] " + player.getUsername() + " quay về lobby");
+        
+        // Xóa opponent mapping khi quay về lobby
+        String opponentName = opponentMap.remove(player.getUsername());
+        if (opponentName != null) {
+            opponentMap.remove(opponentName);
+            System.out.println("[ClientHandler] Đã xóa opponent mapping: " + player.getUsername() + " <-> " + opponentName);
+        }
+        
+        // Broadcast lại danh sách người chơi
+        broadcastFullPlayerList();
     }
     
     private void handleExitGame(ObjectSentReceived req) throws Exception {
@@ -266,6 +366,8 @@ public class ClientHandler implements Runnable{
                 }
             }
 
+            // Xóa opponent mapping khi người chơi thoát về lobby
+            System.out.println("[ClientHandler] Xóa opponent mapping khi thoát game");
             // Xóa cả 2 chiều khỏi map
             opponentMap.remove(player.getUsername());
             opponentMap.remove(opponentName);

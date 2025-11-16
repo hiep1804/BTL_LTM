@@ -16,11 +16,10 @@ import java.util.Set;
 class Room implements Runnable {
     private Player p1, p2;
     private NetworkManager networkManager1, networkManager2;
-    private int score1 = 0, score2 = 0;
+    private int score1 = 50, score2 = 50;
     private volatile boolean gameRunning = true;
     private final Set<String> submittedPlayers = new HashSet<>();
     private ArrayList<Integer> sortedArray = new ArrayList<>();
-    private String firstCorrectSubmitter = null;
     private static final int TOTAL_ROUNDS = 3;
     private static final int ROUND_TIME_SECONDS = 30;
     private int currentRound = 0;
@@ -71,7 +70,6 @@ class Room implements Runnable {
         synchronized (this) {
             this.sortedArray = new ArrayList<>(arrAfterSort);
             this.submittedPlayers.clear();
-            this.firstCorrectSubmitter = null;
         }
         
         System.out.println("[Room] Ván " + currentRound + " - Mảng: " + arr);
@@ -103,6 +101,13 @@ class Room implements Runnable {
             // Hết thời gian
             if (elapsed >= timeout) {
                 System.out.println("[Room] Hết thời gian ván " + currentRound);
+                
+                // Đợi 1 giây để client kịp gửi đáp án tự động
+                Thread.sleep(1000);
+                
+                // Không tự động trừ điểm nữa, client sẽ tự động gửi bài
+                // và server sẽ chấm điểm dựa trên kết quả thực tế
+                System.out.println("[Room] Đã đợi client gửi bài tự động");
                 break;
             }
             
@@ -114,6 +119,11 @@ class Room implements Runnable {
     }
     
     private void sendRoundEnd() throws Exception {
+        // Đợi một chút để đảm bảo điểm đã được cập nhật
+        Thread.sleep(300);
+        
+        System.out.println("[Room] Gửi kết thúc ván - Điểm: " + p1.getUsername() + "=" + score1 + ", " + p2.getUsername() + "=" + score2);
+        
         ScoreUpdate update = new ScoreUpdate(
             p1.getUsername(), score1,
             p2.getUsername(), score2,
@@ -192,41 +202,41 @@ class Room implements Runnable {
         
         submittedPlayers.add(username);
 
-        // Kiểm tra đúng sai
-        boolean correct = submission != null && submission.size() == sortedArray.size();
-        if (correct) {
+        // Đếm số vị trí sai
+        int wrongPositions = 0;
+        boolean correct = true;
+        
+        if (submission == null || submission.size() != sortedArray.size()) {
+            // Nếu không đủ số lượng, trừ toàn bộ
+            wrongPositions = sortedArray.size();
+            correct = false;
+        } else {
             for (int i = 0; i < sortedArray.size(); i++) {
                 if (!sortedArray.get(i).equals(submission.get(i))) {
+                    wrongPositions++;
                     correct = false;
-                    break;
                 }
             }
         }
 
-        // Cộng điểm
-        if (correct) {
-            // Cộng 1 điểm cho đáp án đúng
+        // Trừ điểm theo số vị trí sai
+        if (!correct) {
             if (username.equals(p1.getUsername())) {
-                score1++;
+                int oldScore = score1;
+                score1 -= wrongPositions;
+                if (score1 < 0) score1 = 0; // Không cho điểm âm
+                System.out.println("[Room] " + username + " sai " + wrongPositions + " vị trí, điểm: " + oldScore + " -> " + score1);
             } else if (username.equals(p2.getUsername())) {
-                score2++;
-            }
-            
-            // Nếu là người đầu tiên nộp đúng, cộng thêm 1 điểm
-            if (firstCorrectSubmitter == null) {
-                firstCorrectSubmitter = username;
-                if (username.equals(p1.getUsername())) {
-                    score1++;
-                } else if (username.equals(p2.getUsername())) {
-                    score2++;
-                }
-                System.out.println("[Room] " + username + " nộp đúng TRƯỚC, được +2 điểm!");
-            } else {
-                System.out.println("[Room] " + username + " nộp đúng, được +1 điểm");
+                int oldScore = score2;
+                score2 -= wrongPositions;
+                if (score2 < 0) score2 = 0;
+                System.out.println("[Room] " + username + " sai " + wrongPositions + " vị trí, điểm: " + oldScore + " -> " + score2);
             }
         } else {
-            System.out.println("[Room] " + username + " nộp sai");
+            System.out.println("[Room] " + username + " nộp đúng, không thay đổi điểm");
         }
+        
+        System.out.println("[Room] Điểm hiện tại: " + p1.getUsername() + "=" + score1 + ", " + p2.getUsername() + "=" + score2);
 
         return new ScoreUpdate(
                 p1.getUsername(),
