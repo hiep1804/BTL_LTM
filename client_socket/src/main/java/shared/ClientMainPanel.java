@@ -230,6 +230,18 @@ public class ClientMainPanel extends JPanel {
                                     String chatMessage = (String) finalReceived.getObj();
                                     clientMainFrm.forwardChatMessage(chatMessage);
                                 }
+                                case "reject challenge" -> {
+                                    Player rejectingPlayer = (Player) finalReceived.getObj();
+                                    
+                                    String message = "Người chơi '" + rejectingPlayer.getUsername() + "' đã từ chối lời mời thách đấu của bạn.";
+                                    
+                                    JOptionPane.showMessageDialog(
+                                        ClientMainPanel.this,
+                                        message,
+                                        "Thách đấu bị từ chối",
+                                        JOptionPane.INFORMATION_MESSAGE
+                                    );
+                                }
                             }
                         } catch (Exception ex) {
                             Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);
