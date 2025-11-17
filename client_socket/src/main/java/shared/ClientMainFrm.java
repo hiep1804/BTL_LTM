@@ -32,7 +32,7 @@ public class ClientMainFrm extends JFrame{
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("192.168.131.1", 59);
+            networkManager.connect("192.168.1.4", 59);
         }
         catch(Exception e){
             e.printStackTrace();

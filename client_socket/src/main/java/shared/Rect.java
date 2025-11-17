@@ -22,7 +22,8 @@ class Rect {
     private Color color;
     private String value;
     private boolean movable;
-    private int originalX, originalY; // lưu vị trí ban đầu
+    private int originalX, originalY; // lưu vị trí hiện tại của bóng (có thể thay đổi khi snap vào ô)
+    private int initialX, initialY; // lưu vị trí gốc ban đầu không bao giờ thay đổi
 
     public Rect(int x, int y, int w, int h, Color color, String value, boolean movable) {
         this.x = x;
@@ -34,6 +35,8 @@ class Rect {
         this.movable = movable;
         this.originalX = x;
         this.originalY = y;
+        this.initialX = x;
+        this.initialY = y;
     }
 
     public int getX() {
@@ -106,6 +109,14 @@ class Rect {
 
     public void setOriginalY(int originalY) {
         this.originalY = originalY;
+    }
+
+    public int getInitialX() {
+        return initialX;
+    }
+
+    public int getInitialY() {
+        return initialY;
     }
     
     public Rectangle getBounds() {

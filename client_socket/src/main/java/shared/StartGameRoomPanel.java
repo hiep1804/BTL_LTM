@@ -508,14 +508,32 @@ public class StartGameRoomPanel extends JPanel{
                                 s.getY() + s.getH()/2
                         );
                         if (dist < 50) {
-                            // Xóa giá trị ở vị trí cũ (nếu có)
+                            // Nếu ô đích đã có bóng khác, tìm và đưa bóng đó về vị trí gốc ban đầu
+                            if (!s.getValue().isEmpty() && !s.getValue().equals(dragging.getValue())) {
+                                String oldValue = s.getValue();
+                                // Tìm bóng có giá trị này trong movableRects và đưa về vị trí gốc ban đầu
+                                for (Rect m : movableRects) {
+                                    if (m.getValue().equals(oldValue)) {
+                                        // Đưa về vị trí ban đầu thực sự
+                                        m.setX(m.getInitialX());
+                                        m.setY(m.getInitialY());
+                                        m.setOriginalX(m.getInitialX());
+                                        m.setOriginalY(m.getInitialY());
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Xóa giá trị ở vị trí cũ của bóng đang kéo (nếu có)
                             if (previousSlot != null && previousSlot != s) {
                                 previousSlot.setValue("");
                             }
                             
-                            // Snap vị trí
+                            // Snap vị trí và cập nhật vị trí gốc hiện tại
                             dragging.setX(s.getX());
                             dragging.setY(s.getY());
+                            dragging.setOriginalX(s.getX());
+                            dragging.setOriginalY(s.getY());
 
                             // Gán giá trị của ô di chuyển cho ô đứng im
                             s.setValue(dragging.getValue());
@@ -525,7 +543,7 @@ public class StartGameRoomPanel extends JPanel{
                     }
 
                     if (!snapped) {
-                        // Nếu không snap vào vị trí nào, trả về vị trí cũ
+                        // Nếu không snap vào vị trí nào, trả về vị trí gốc ban đầu
                         dragging.setX(dragging.getOriginalX());
                         dragging.setY(dragging.getOriginalY());
                         
