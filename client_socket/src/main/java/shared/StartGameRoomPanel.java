@@ -6,6 +6,7 @@ package shared;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -14,12 +15,18 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
 /**
  *
@@ -47,6 +54,14 @@ public class StartGameRoomPanel extends JPanel{
     private int roundTimeSeconds = 0;
     private javax.swing.Timer countdownTimer;
     private boolean hasSubmitted = false;
+    
+    // Chat components
+    private JTextArea chatArea;
+    private JTextField chatInput;
+    private JScrollPane chatScrollPane;
+    private JPanel chatPanel;
+    private JButton toggleChatButton;
+    private boolean isChatVisible = false;
 
     public StartGameRoomPanel(Player p1, Player p2, ClientMainFrm clientMainFrm, NetworkManager networkManager) throws Exception {
         this.clientMainFrm=clientMainFrm;
@@ -130,6 +145,10 @@ public class StartGameRoomPanel extends JPanel{
         timerLabel.setHorizontalAlignment(SwingConstants.CENTER);
         add(timerLabel);
         
+        // Khởi tạo nút toggle chat và panel chat
+        initializeChatPanel();
+        initializeToggleChatButton();
+        
         // Hướng dẫn chơi
         JLabel instruction = new JLabel("Kéo bóng bay để sắp xếp từ nhỏ đến lớn!");
         instruction.setBounds(150, 220, 500, 30);
@@ -139,6 +158,179 @@ public class StartGameRoomPanel extends JPanel{
         add(instruction);
         
         System.out.println("[StartGameRoomPanel] Constructor hoàn tất, đang chờ nhận ván đấu...");
+    }
+    
+    private void initializeChatPanel() {
+        // Panel chat container với bo góc và bóng đổ
+        chatPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Vẽ bóng đổ
+                g2d.setColor(new Color(0, 0, 0, 30));
+                g2d.fillRoundRect(3, 3, getWidth() - 6, getHeight() - 6, 15, 15);
+                
+                // Vẽ nền trắng
+                g2d.setColor(Color.WHITE);
+                g2d.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 3, 15, 15);
+                
+                // Vẽ viền
+                g2d.setColor(new Color(156, 39, 176));
+                g2d.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, 15, 15);
+            }
+        };
+        chatPanel.setLayout(null);
+        chatPanel.setBounds(30, 210, 180, 300);
+        chatPanel.setOpaque(false);
+        chatPanel.setVisible(false); // Ẩn mặc định
+        
+        // Tiêu đề chat
+        JLabel chatTitle = new JLabel(" Trò chuyện");
+        chatTitle.setBounds(10, 5, 160, 25);
+        chatTitle.setFont(new Font("Arial", Font.BOLD, 14));
+        chatTitle.setForeground(new Color(156, 39, 176));
+        chatPanel.add(chatTitle);
+        
+        // Khu vực hiển thị tin nhắn
+        chatArea = new JTextArea();
+        chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+        chatArea.setWrapStyleWord(true);
+        chatArea.setFont(new Font("Arial", Font.PLAIN, 12));
+        chatArea.setBackground(new Color(250, 250, 250));
+        chatArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+        chatScrollPane = new JScrollPane(chatArea);
+        chatScrollPane.setBounds(10, 35, 160, 210);
+        chatScrollPane.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
+        chatScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        chatScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        chatPanel.add(chatScrollPane);
+        
+        // Ô nhập tin nhắn
+        chatInput = new JTextField();
+        chatInput.setBounds(10, 250, 160, 30);
+        chatInput.setFont(new Font("Arial", Font.PLAIN, 12));
+        chatInput.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(156, 39, 176), 1),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        
+        // Gửi tin nhắn khi nhấn Enter
+        chatInput.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    sendChatMessage();
+                }
+            }
+        });
+        chatPanel.add(chatInput);
+        
+        add(chatPanel);
+    }
+    
+    private void initializeToggleChatButton() {
+        toggleChatButton = new JButton("Chat") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Vẽ nền gradient
+                GradientPaint gp;
+                if (getModel().isPressed()) {
+                    gp = new GradientPaint(0, 0, new Color(126, 29, 146),
+                                          0, getHeight(), new Color(106, 19, 126));
+                } else if (getModel().isRollover()) {
+                    gp = new GradientPaint(0, 0, new Color(176, 49, 196),
+                                          0, getHeight(), new Color(156, 39, 176));
+                } else {
+                    gp = new GradientPaint(0, 0, new Color(156, 39, 176),
+                                          0, getHeight(), new Color(126, 29, 146));
+                }
+                g2d.setPaint(gp);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                
+                // Vẽ text
+                g2d.setColor(getForeground());
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+                g2d.drawString(getText(), x, y);
+            }
+        };
+        toggleChatButton.setBounds(30, 520, 60, 45);
+        toggleChatButton.setFont(new Font("Arial", Font.PLAIN, 24));
+        toggleChatButton.setForeground(Color.WHITE);
+        toggleChatButton.setFocusPainted(false);
+        toggleChatButton.setBorderPainted(false);
+        toggleChatButton.setContentAreaFilled(false);
+        toggleChatButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        toggleChatButton.setToolTipText("Mở/Đóng chat");
+        
+        toggleChatButton.addActionListener(e -> toggleChat());
+        
+        add(toggleChatButton);
+    }
+    
+    private void toggleChat() {
+        isChatVisible = !isChatVisible;
+        chatPanel.setVisible(isChatVisible);
+        
+        // Thay đổi icon nút
+        if (isChatVisible) {
+            toggleChatButton.setText("x");
+            toggleChatButton.setToolTipText("Đóng chat");
+        } else {
+            toggleChatButton.setText("Chat");
+            toggleChatButton.setToolTipText("Mở chat");
+        }
+        
+        repaint();
+    }
+    
+    private void sendChatMessage() {
+        String message = chatInput.getText().trim();
+        if (message.isEmpty()) {
+            return;
+        }
+        
+        try {
+            // Gửi tin nhắn lên server
+            networkManager.send(new ObjectSentReceived("chat_message", message));
+            
+            // Hiển thị tin nhắn của mình
+            appendChatMessage("Bạn: " + message, new Color(33, 150, 243));
+            
+            // Xóa ô nhập
+            chatInput.setText("");
+        } catch (Exception e) {
+            e.printStackTrace();
+            appendChatMessage(" Lỗi: Không thể gửi tin nhắn", Color.RED);
+        }
+    }
+    
+    public void receiveChatMessage(String message) {
+        // Hiển thị tin nhắn từ đối thủ
+        appendChatMessage(p2.getUsername() + ": " + message, new Color(255, 87, 34));
+    }
+    
+    private void appendChatMessage(String message, Color color) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            try {
+                // Thêm tin nhắn với màu sắc
+                chatArea.append(message + "\n");
+                
+                // Tự động cuộn xuống cuối
+                chatArea.setCaretPosition(chatArea.getDocument().getLength());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
     
     // Phương thức công khai để nhận thông báo đối thủ thoát từ ClientMainPanel

@@ -56,7 +56,7 @@ public class PlayerInfoPanel extends JPanel {
         y += 55;
         addInfoRow("Tỷ lệ thắng", winRate, y, true);
         y += 55;
-        addInfoRow("Trạng thái", status, y, false);
+        // addInfoRow("Trạng thái", status, y, false);
     }
 
     private void addInfoRow(String title, String value, int y, boolean withSeparator) {

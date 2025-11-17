@@ -83,6 +83,7 @@ public class ClientHandler implements Runnable{
                     case "accept_rematch" -> handleAcceptRematch(message);
                     case "reject_rematch" -> handleRejectRematch(message);
                     case "back_to_lobby" -> handleBackToLobby(message);
+                    case "chat_message" -> handleChatMessage(message);
                     default -> System.out.println("Unknown message type: " + msgType);
                 }
             }
@@ -412,6 +413,26 @@ public class ClientHandler implements Runnable{
                 NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
                 if (opponentNM != null) {
                     opponentNM.send(new ObjectSentReceived("update_score", update));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void handleChatMessage(ObjectSentReceived message) {
+        try {
+            String chatMessage = (String) message.getObj();
+            System.out.println("[ClientHandler] " + player.getUsername() + " gửi tin nhắn: " + chatMessage);
+            
+            // Lấy thông tin đối thủ
+            String opponentName = opponentMap.get(player.getUsername());
+            if (opponentName != null) {
+                NetworkManager opponentNM = onlinePlayersNetwork.get(opponentName);
+                if (opponentNM != null) {
+                    // Gửi tin nhắn cho đối thủ
+                    opponentNM.send(new ObjectSentReceived("chat_message", chatMessage));
+                    System.out.println("[ClientHandler] Đã chuyển tin nhắn đến " + opponentName);
                 }
             }
         } catch (Exception e) {

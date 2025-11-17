@@ -226,6 +226,10 @@ public class ClientMainPanel extends JPanel {
                                         JOptionPane.INFORMATION_MESSAGE
                                     );
                                 }
+                                case "chat_message" -> {
+                                    String chatMessage = (String) finalReceived.getObj();
+                                    clientMainFrm.forwardChatMessage(chatMessage);
+                                }
                             }
                         } catch (Exception ex) {
                             Logger.getLogger(ClientMainPanel.class.getName()).log(Level.SEVERE, null, ex);

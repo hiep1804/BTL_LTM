@@ -32,7 +32,7 @@ public class ClientMainFrm extends JFrame{
     public ClientMainFrm(){
         try{
             networkManager=new NetworkManager();
-            networkManager.connect("192.168.1.115", 59);
+            networkManager.connect("192.168.131.1", 59);
         }
         catch(Exception e){
             e.printStackTrace();
@@ -140,6 +140,15 @@ public class ClientMainFrm extends JFrame{
         if (startGameRoomPanel != null) {
             System.out.println("[ClientMainFrm] Thông báo đối thủ thoát cho StartGameRoomPanel");
             startGameRoomPanel.handleOpponentLeft();
+        } else {
+            System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
+        }
+    }
+    
+    // Chuyển tiếp tin nhắn chat đến StartGameRoomPanel
+    public void forwardChatMessage(String message) {
+        if (startGameRoomPanel != null) {
+            startGameRoomPanel.receiveChatMessage(message);
         } else {
             System.out.println("[ClientMainFrm] CẢNH BÁO: startGameRoomPanel là null!");
         }
