@@ -23,6 +23,7 @@ class Room implements Runnable {
     private static final int TOTAL_ROUNDS = 3;
     private static final int ROUND_TIME_SECONDS = 30;
     private int currentRound = 0;
+    private String firstCorrectSubmitter = null;
 
     public Room(Player p1, Player p2, NetworkManager networkManager1, NetworkManager networkManager2) {
         this.p1 = p1;
@@ -70,6 +71,7 @@ class Room implements Runnable {
         synchronized (this) {
             this.sortedArray = new ArrayList<>(arrAfterSort);
             this.submittedPlayers.clear();
+            this.firstCorrectSubmitter = null; // Reset cho vòng mới
         }
         
         System.out.println("[Room] Ván " + currentRound + " - Mảng: " + arr);
@@ -216,6 +218,29 @@ class Room implements Runnable {
                     wrongPositions++;
                     correct = false;
                 }
+            }
+        }
+
+        // Cộng điểm
+        if (correct) {
+            // Cộng 10 điểm cho đáp án đúng
+            if (username.equals(p1.getUsername())) {
+                score1 += 10;
+            } else if (username.equals(p2.getUsername())) {
+                score2 += 10;
+            }
+            
+            // Nếu là người đầu tiên nộp đúng, cộng thêm 10 điểm
+            if (firstCorrectSubmitter == null) {
+                firstCorrectSubmitter = username;
+                if (username.equals(p1.getUsername())) {
+                    score1 += 10;
+                } else if (username.equals(p2.getUsername())) {
+                    score2 += 10;
+                }
+                System.out.println("[Room] " + username + " nộp đúng TRƯỚC, được +20 điểm!");
+            } else {
+                System.out.println("[Room] " + username + " nộp đúng, được +10 điểm");
             }
         }
 
